@@ -22,7 +22,7 @@ export function checkAuth(callback) {
     if (user) {
       if (typeof callback === "function") callback(user);
     } else {
-      window.location.href = "login.html";
+      window.location.href = "index.html";
     }
   });
 }
@@ -32,12 +32,12 @@ export function logoutUser() {
   signOut(auth).then(() => {
     localStorage.removeItem("userProfileImage");
     localStorage.removeItem("customStoreName");
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   }).catch((error) => {
     console.error("Logout Error:", error);
     localStorage.removeItem("userProfileImage");
     localStorage.removeItem("customStoreName");
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   });
 }
 

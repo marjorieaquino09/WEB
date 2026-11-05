@@ -4,19 +4,282 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SARI - Credit Ledger</title>
-  <link rel="stylesheet" href="css/dashboard.css?v=12.0">
-  <link rel="stylesheet" href="css/inventory.css?v=12.0">
-  <link rel="stylesheet" href="css/extra.css?v=12.0">
+
+  <link rel="stylesheet" href="css/dashboard.css?v=20.0">
+  <link rel="stylesheet" href="css/inventory.css?v=20.0">
+  <link rel="stylesheet" href="css/extra.css?v=20.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css?v=12.0">
+  <link rel="stylesheet" href="css/style.css?v=20.0">
+
+  <style>
+    .ledger-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .search-box.ledger-search-box {
+      flex: 1;
+      max-width: 500px;
+      height: 48px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-radius: 28px;
+      background: #ffffff;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .search-box.ledger-search-box input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-size: 14px;
+      color: #102a24;
+    }
+
+    .btn-add-credit {
+      background: #164a41;
+      color: #ffffff;
+      border: none;
+      padding: 0 22px;
+      height: 48px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+
+    .btn-add-credit:hover {
+      background: #103b34;
+      transform: translateY(-1px);
+    }
+
+    .ledger-grid-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .ledger-table-card {
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+      padding: 20px;
+      overflow-x: auto;
+    }
+
+    .ledger-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .ledger-table thead th {
+      padding: 14px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .ledger-table tbody tr {
+      height: 56px;
+      border-bottom: 1px solid #f8fafc;
+    }
+
+    .ledger-table td {
+      padding: 10px;
+      font-size: 13px;
+      vertical-align: middle;
+      color: #102a24;
+    }
+
+    .ledger-sidebar-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .ledger-stat-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    .ledger-stat-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .ledger-stat-icon.purple { background: #f3e8ff; color: #a855f7; }
+    .ledger-stat-icon.red { background: #fee2e2; color: #dc2626; }
+    .ledger-stat-icon.green { background: #dcfce7; color: #16a34a; }
+
+    .ledger-stat-text .label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #64748b;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .ledger-stat-text .value {
+      font-size: 20px;
+      font-weight: 900;
+      color: #102a24;
+    }
+
+    /* MODAL STYLES */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 440px;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #102a24;
+    }
+
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      color: #64748b;
+      cursor: pointer;
+      transition: color 0.2s ease, transform 0.15s ease;
+    }
+
+    .modal-close-btn:hover {
+      color: #ef4444;
+      transform: scale(1.1);
+    }
+
+    .modal-form-group {
+      margin-bottom: 14px;
+    }
+
+    .modal-form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .modal-form-input {
+      width: 100%;
+      height: 40px;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      outline: none;
+      font-size: 13px;
+      color: #102a24;
+      transition: border-color 0.2s ease;
+    }
+
+    .modal-form-input:focus {
+      border-color: #164a41;
+      box-shadow: 0 0 0 3px rgba(22, 74, 65, 0.1);
+    }
+
+    .modal-submit-btn {
+      width: 100%;
+      height: 42px;
+      margin-top: 10px;
+      background: #164a41;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .modal-submit-btn:hover {
+      background: #103b34;
+    }
+
+    .sidebar-nav li.active,
+.sidebar-nav li.active a,
+.sidebar-nav .sidebar-link.active,
+.sidebar-link.active,
+a.sidebar-link[aria-current="page"] {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+}
+  </style>
 </head>
 <body class="app-page">
 
   <div class="app-shell">
 
+    
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <a href="homepage.html" class="sidebar-logo">Sari</a>
+        <a href="homepage.html" class="sidebar-logo">
+          <img src="assets/sari-logo.jpg" alt="Sari Logo" class="sidebar-logo-img">
+          <span>Sari</span>
+        </a>
       </div>
 
       <nav class="sidebar-nav">
@@ -24,59 +287,80 @@
           <span class="sidebar-icon"><i class="fa-solid fa-house"></i></span>
           <span class="sidebar-label">Home</span>
         </a>
+
         <a href="inventory.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-box"></i></span>
           <span class="sidebar-label">Inventory</span>
         </a>
+
         <a href="checkout.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-cash-register"></i></span>
           <span class="sidebar-label">Checkout</span>
         </a>
+
         <a href="dashboard.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-chart-pie"></i></span>
           <span class="sidebar-label">Dashboard</span>
         </a>
-        <a href="credit-ledger.html" class="sidebar-link active">
+
+        <a href="credit-ledger.html" class="sidebar-link" aria-current="page">
           <span class="sidebar-icon"><i class="fa-solid fa-money-check-dollar"></i></span>
           <span class="sidebar-label">Credit Ledger</span>
         </a>
+
         <a href="transactions.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-receipt"></i></span>
           <span class="sidebar-label">Transactions</span>
         </a>
-        <a href="settings.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-gear"></i></span>
-          <span class="sidebar-label">Settings</span>
-        </a>
+
         <a href="profile.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-user"></i></span>
-          <span class="sidebar-label">My Profile</span>
+          <span class="sidebar-label">Profile &amp; Settings</span>
         </a>
       </nav>
 
       <div class="sidebar-spacer"></div>
 
-      <button id="logoutBtn" class="sidebar-logout" style="background:none; border:none; cursor:pointer; width:100%; text-align:left; color:inherit;">
+      <button
+        id="logoutBtn"
+        class="sidebar-logout"
+        type="button"
+        style="background:none; border:none; cursor:pointer; width:100%; text-align:left; color:inherit;"
+      >
         <span class="sidebar-icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
         <span class="sidebar-label">Log Out</span>
       </button>
     </aside>
 
+   
     <main class="main-content">
 
+  
       <div class="topbar-row">
         <div class="topbar">
-          <div class="topbar-left">
-            <button class="topbar-home-btn" type="button">Credit Ledger</button>
-          </div>
+          <div class="topbar-left"></div>
 
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="notifications.html" id="notificationBtn" style="position: relative; background: rgba(255,255,255,0.1); color: #fff; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Notifications">
-              <i class="fa-solid fa-bell" style="font-size: 1rem;"></i>
-              <span id="notifBadge" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 10px; border: 2px solid #111d17; min-width: 18px; text-align: center;">0</span>
+          <div style="display:flex; align-items:center; gap:15px;">
+            <a
+              href="notifications.html"
+              id="notificationBtn"
+              style="position:relative; background:rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none;"
+              title="Notifications"
+              aria-label="Notifications"
+            >
+              <i class="fa-solid fa-bell" style="font-size:1rem;"></i>
+              <span
+                id="notifBadge"
+                style="display:none; position:absolute; top:-2px; right:-2px; background:#ef4444; color:#ffffff; font-size:10px; font-weight:800; padding:2px 5px; border-radius:10px; border:2px solid #111d17; min-width:18px; text-align:center;"
+              >0</span>
             </a>
 
-            <a class="topbar-store" id="profileBtn" href="profile.html" style="text-decoration:none; color:inherit; display: flex; align-items: center; gap: 10px;">
+            <a
+              class="topbar-store"
+              id="profileBtn"
+              href="profile.html"
+              style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;"
+            >
               <span class="topbar-avatar" id="avatarContainer"></span>
               <span id="topbarStoreName">Loading...</span>
             </a>
@@ -84,71 +368,127 @@
         </div>
       </div>
 
-      <div class="ledger-layout">
+      
+      <div class="ledger-header-row">
+        <div class="search-box ledger-search-box">
+          <i class="fa-solid fa-magnifying-glass" style="color:#94a3b8;"></i>
+          <input type="text" id="searchCustomerInput" placeholder="Search customer name or phone...">
+        </div>
 
-        <section class="inventory-table-panel ledger-table-panel">
-          <table class="inventory-table">
+        <button type="button" id="openAddModalBtn" class="btn-add-credit">
+          <i class="fa-solid fa-plus"></i> Add Credit Record
+        </button>
+      </div>
+
+     
+      <div class="ledger-grid-layout">
+
+     
+        <div class="ledger-table-card">
+          <table class="ledger-table">
             <thead>
               <tr>
                 <th>Customer</th>
                 <th>Phone</th>
-                <th>Credit</th>
-                <th>Limit</th>
-                <th>Last Payment</th>
+                <th>Credit Amount</th>
+                <th>Credit Limit</th>
+                <th>Date</th>
                 <th>Status</th>
-                <th class="actions-col">Actions</th>
+                <th style="text-align: center;">Actions</th>
               </tr>
             </thead>
             <tbody id="ledgerTableBody">
               <tr>
-                <td colspan="7" style="text-align: center; color: #7c8b82; padding: 24px;">Naglo-load ng utang records...</td>
+                <td colspan="7" style="text-align:center; color:#94a3b8; padding:30px;">
+                  Naglo-load ng utang records...
+                </td>
               </tr>
             </tbody>
           </table>
-        </section>
+        </div>
 
-        <aside class="ledger-rail">
-          <div class="inventory-search">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="searchCustomerInput" placeholder="Search customers...">
+       
+        <div class="ledger-sidebar-cards">
+
+          <div class="ledger-stat-card" style="flex-direction: column; align-items: center; text-align: center;">
+            <div class="ledger-stat-text">
+              <div class="label">Total Owed This Month</div>
+              <div class="value" id="statTotalOwed" style="font-size: 24px; margin-top: 4px;">₱0.00</div>
+            </div>
           </div>
 
           <div class="ledger-stat-card">
-            <div class="label">Total Owed This Month</div>
-            <div class="value" id="statTotalOwed">₱0.00</div>
-          </div>
-
-          <div class="ledger-stat-card">
-            <span class="ledger-stat-icon purple"><i class="fa-solid fa-users"></i></span>
-            <div class="inventory-stat-text">
+            <span class="ledger-stat-icon purple">
+              <i class="fa-solid fa-users"></i>
+            </span>
+            <div class="ledger-stat-text">
               <div class="label">Customers on Credit</div>
               <div class="value" id="statCustomerCount">0</div>
             </div>
           </div>
 
           <div class="ledger-stat-card">
-            <span class="ledger-stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></span>
-            <div class="inventory-stat-text">
+            <span class="ledger-stat-icon red">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </span>
+            <div class="ledger-stat-text">
               <div class="label">Overdue Accounts</div>
               <div class="value" id="statOverdueCount">0</div>
             </div>
           </div>
 
           <div class="ledger-stat-card">
-            <span class="ledger-stat-icon green"><i class="fa-solid fa-hand-holding-dollar"></i></span>
-            <div class="inventory-stat-text">
+            <span class="ledger-stat-icon green">
+              <i class="fa-solid fa-hand-holding-dollar"></i>
+            </span>
+            <div class="ledger-stat-text">
               <div class="label">Collected This Month</div>
               <div class="value" id="statCollectedThisMonth">₱0.00</div>
             </div>
           </div>
-        </aside>
+
+        </div>
 
       </div>
 
     </main>
   </div>
 
-  <script src="js/script.js?v=11.0" type="module"></script>
-  <script type="module" src="js/credit-ledger.js?v=11.0"></script>
+  
+  <div id="addCreditModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New Credit Record</h3>
+        <button type="button" id="closeAddModalBtn" class="modal-close-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form id="addCreditForm">
+        <div class="modal-form-group">
+          <label class="modal-form-label" for="newCustomerName">Customer Name</label>
+          <input type="text" id="newCustomerName" placeholder="e.g. Maria Santos" required class="modal-form-input">
+        </div>
+
+        <div class="modal-form-group">
+          <label class="modal-form-label" for="newCustomerPhone">Phone Number (Optional)</label>
+          <input type="text" id="newCustomerPhone" placeholder="e.g. 09123456789" class="modal-form-input">
+        </div>
+
+        <div class="modal-form-group">
+          <label class="modal-form-label" for="newCreditAmount">Credit Amount (₱)</label>
+          <input type="number" step="0.01" id="newCreditAmount" placeholder="0.00" min="1" required class="modal-form-input">
+        </div>
+
+        <div class="modal-form-group">
+          <label class="modal-form-label" for="newCreditNotes">Items / Description (Optional)</label>
+          <input type="text" id="newCreditNotes" placeholder="e.g. 2 Cans Tuna, 1 Rice" class="modal-form-input">
+        </div>
+
+        <button type="submit" id="btnSaveCredit" class="modal-submit-btn">Save Credit Record</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/script.js?v=20.0" type="module"></script>
+  <script type="module" src="js/credit-ledger.js?v=20.0"></script>
 </body>
 </html>

@@ -4,15 +4,193 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SARI - Checkout</title>
-  <link rel="stylesheet" href="css/dashboard.css?v=12.0">
-  <link rel="stylesheet" href="css/inventory.css?v=12.0">
-  <link rel="stylesheet" href="css/extra.css?v=12.0">
-  <link rel="stylesheet" href="css/checkout.css?v=12.0">
+
+  <script>
+    (function () {
+      var t = localStorage.getItem('sari_theme');
+      if (t && t !== 'default') document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+
+  <link rel="stylesheet" href="css/dashboard.css?v=14.0">
+  <link rel="stylesheet" href="css/inventory.css?v=14.0">
+  <link rel="stylesheet" href="css/extra.css?v=14.0">
+  <link rel="stylesheet" href="css/checkout.css?v=14.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  
-  <link rel="stylesheet" href="css/style.css?v=12.0">
+  <link rel="stylesheet" href="css/style.css?v=14.0">
+
+  <style>
+    .sari-searchrow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .pos-products .sari-searchbar {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 48px;
+      padding: 0 20px;
+      background: #ffffff;
+      border-radius: 999px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      position: relative;
+    }
+
+    .pos-products .sari-searchbar:focus-within {
+      box-shadow: 0 0 0 3px rgba(125, 189, 120, 0.55);
+    }
+
+    .pos-products .sari-searchbar .sari-search-icon {
+      position: static !important;
+      transform: none !important;
+      inset: auto !important;
+      margin: 0 !important;
+      flex: 0 0 auto;
+      width: 18px;
+      text-align: center;
+      font-size: 0.95rem;
+      color: #64748b !important;
+    }
+
+    .pos-products .sari-searchbar input#posSearch {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: auto !important;
+      height: 100%;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      color: #1e293b !important;
+      font-size: 0.95rem;
+    }
+
+    .pos-products .sari-searchbar input#posSearch::placeholder {
+      color: #94a3b8;
+    }
+
+    .pos-products .sari-scanbtn {
+      flex: 0 0 auto;
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      transition: transform 0.15s ease;
+    }
+
+    .pos-products .sari-scanbtn:hover {
+      transform: scale(1.06);
+    }
+
+    .pos-products .sari-scanbtn i {
+      font-size: 1.2rem;
+      color: #164a41 !important;
+      background: none !important;
+      -webkit-text-fill-color: #164a41;
+    }
+
+    .sidebar-nav li.active,
+    .sidebar-nav li.active a,
+    .sidebar-nav .sidebar-link.active,
+    .sidebar-link.active,
+    a.sidebar-link[aria-current="page"] {
+      background: rgba(255, 255, 255, 0.18) !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      border-radius: 12px !important;
+    }
+
+    .sidebar-nav li.active .sidebar-icon,
+    .sidebar-link.active .sidebar-icon {
+      background-color: #9dc88d !important;
+      color: #4d774e !important;
+    }
+
+    .pos-grid {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+      gap: 16px !important;
+      margin-top: 16px !important;
+    }
+
+    .pos-product-card,
+    .product-card {
+      height: auto !important;
+      min-height: 0 !important;
+      padding: 12px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      border-radius: 16px !important;
+      background: #ffffff !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .pos-product-card img,
+    .product-card img {
+      width: 100% !important;
+      height: 90px !important;
+      object-fit: contain !important;
+      margin-bottom: 8px !important;
+    }
+
+    .pos-product-card .product-name,
+    .product-card .product-name {
+      font-size: 0.85rem !important;
+      font-weight: 700 !important;
+      color: #1e293b !important;
+      line-height: 1.2 !important;
+      height: 2.4em !important;
+      overflow: hidden !important;
+      display: -webkit-box !important;
+      -webkit-line-clamp: 2 !important;
+      -webkit-box-orient: vertical !important;
+      margin-bottom: 6px !important;
+    }
+
+    .pos-product-card .product-price,
+    .product-card .product-price {
+      font-size: 0.95rem !important;
+      font-weight: 800 !important;
+      color: #164a41 !important;
+      margin-bottom: 4px !important;
+    }
+
+    .pos-product-card .product-stock,
+    .product-card .product-stock {
+      font-size: 0.75rem !important;
+      color: #64748b !important;
+      margin: 0 !important;
+    }
+
+    .pos-complete-btn {
+      background-color: #164a41 !important;
+      color: #ffffff !important;
+      border: none !important;
+      font-weight: 700 !important;
+      transition: background-color 0.2s ease, transform 0.1s ease !important;
+    }
+
+    .pos-complete-btn:hover {
+      background-color: #113831 !important;
+      transform: translateY(-1px) !important;
+    }
+  </style>
 </head>
 <body class="app-page">
 
@@ -20,7 +198,10 @@
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <a href="homepage.html" class="sidebar-logo">Sari</a>
+        <a href="homepage.html" class="sidebar-logo">
+          <img src="assets/sari-logo.jpg" alt="Sari Logo" class="sidebar-logo-img">
+          <span>Sari</span>
+        </a>
       </div>
 
       <nav class="sidebar-nav">
@@ -28,39 +209,41 @@
           <span class="sidebar-icon"><i class="fa-solid fa-house"></i></span>
           <span class="sidebar-label">Home</span>
         </a>
+
         <a href="inventory.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-box"></i></span>
           <span class="sidebar-label">Inventory</span>
         </a>
-        <a href="checkout.html" class="sidebar-link active">
+
+        <a href="checkout.html" class="sidebar-link" aria-current="page">
           <span class="sidebar-icon"><i class="fa-solid fa-cash-register"></i></span>
           <span class="sidebar-label">Checkout</span>
         </a>
+
         <a href="dashboard.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-chart-pie"></i></span>
           <span class="sidebar-label">Dashboard</span>
         </a>
+
         <a href="credit-ledger.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-money-check-dollar"></i></span>
           <span class="sidebar-label">Credit Ledger</span>
         </a>
+
         <a href="transactions.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-receipt"></i></span>
           <span class="sidebar-label">Transactions</span>
         </a>
-        <a href="settings.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-gear"></i></span>
-          <span class="sidebar-label">Settings</span>
-        </a>
+
         <a href="profile.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-user"></i></span>
-          <span class="sidebar-label">My Profile</span>
+          <span class="sidebar-label">Profile &amp; Settings</span>
         </a>
       </nav>
 
       <div class="sidebar-spacer"></div>
 
-      <button id="logoutBtn" class="sidebar-logout" style="background:none; border:none; cursor:pointer; width:100%; text-align:left; color:inherit;">
+      <button id="logoutBtn" class="sidebar-logout" type="button" style="background:none; border:none; cursor:pointer; width:100%; text-align:left; color:inherit;">
         <span class="sidebar-icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
         <span class="sidebar-label">Log Out</span>
       </button>
@@ -70,17 +253,15 @@
 
       <div class="topbar-row">
         <div class="topbar">
-          <div class="topbar-left">
-            <button class="topbar-home-btn" type="button">Checkout</button>
-          </div>
+          <div class="topbar-left"></div>
 
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="notifications.html" id="notificationBtn" style="position: relative; background: rgba(255,255,255,0.1); color: #fff; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Notifications">
-              <i class="fa-solid fa-bell" style="font-size: 1rem;"></i>
-              <span id="notifBadge" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 10px; border: 2px solid #111d17; min-width: 18px; text-align: center;">0</span>
+          <div style="display:flex; align-items:center; gap:15px;">
+            <a href="notifications.html" id="notificationBtn" style="position:relative; background:rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none;" title="Notifications" aria-label="Notifications">
+              <i class="fa-solid fa-bell" style="font-size:1rem;"></i>
+              <span id="notifBadge" style="display:none; position:absolute; top:-2px; right:-2px; background:#ef4444; color:#ffffff; font-size:10px; font-weight:800; padding:2px 5px; border-radius:10px; border:2px solid #111d17; min-width:18px; text-align:center;">0</span>
             </a>
 
-            <a class="topbar-store" id="profileBtn" href="profile.html" style="text-decoration:none; color:inherit; display: flex; align-items: center; gap: 10px;">
+            <a class="topbar-store" id="profileBtn" href="profile.html" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;">
               <span class="topbar-avatar" id="avatarContainer"></span>
               <span id="topbarStoreName">Loading...</span>
             </a>
@@ -91,31 +272,35 @@
       <div class="pos-layout">
 
         <section class="pos-products">
-          
-          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 0;">
-            <div class="inventory-search pos-search" style="flex: 1; display: flex; align-items: center; background: #fff; border-radius: 20px; padding: 0 16px;">
-              <i class="fa-solid fa-magnifying-glass" style="color: #64748b; margin-right: 10px;"></i>
-              <input type="text" id="posSearch" placeholder="Search product name or scan barcode..." style="border: none; outline: none; width: 100%; padding: 12px 0; background: transparent; font-size: 0.95rem;">
+
+          <div class="sari-searchrow">
+            <div class="sari-searchbar">
+              <i class="fa-solid fa-magnifying-glass sari-search-icon"></i>
+              <input type="text" id="posSearch" placeholder="Search product name or scan barcode..." autocomplete="off">
             </div>
-            
-            <button type="button" id="startScanBtn" style="background: #ffffff; border: none; width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: transform 0.15s ease;" title="Scan Barcode">
-              <i class="fa-solid fa-barcode" style="font-size: 1.2rem; color: #164a41;"></i>
+
+            <button type="button" id="startScanBtn" class="sari-scanbtn" title="Scan Barcode" aria-label="Scan Barcode">
+              <i class="fa-solid fa-barcode"></i>
             </button>
           </div>
 
-          <div id="reader" style="width: 100%; max-width: 400px; margin: 15px auto 0 auto; display: none; border-radius: 12px; overflow: hidden; background: #000;"></div>
+          <div id="reader" style="width:100%; max-width:400px; margin:15px auto 0; display:none; border-radius:12px; overflow:hidden; background:#000;"></div>
 
-          <div class="pos-categories" id="categoryContainer" style="margin-top: 16px;">
+          <div class="pos-categories" id="categoryContainer" style="margin-top:16px;">
             <button class="pos-category active" type="button" data-category="All">All</button>
-            <button class="pos-category" type="button" data-category="Beverage">Beverages</button>
-            <button class="pos-category" type="button" data-category="Chips">Snacks</button>
             <button class="pos-category" type="button" data-category="Household">Household</button>
+            <button class="pos-category" type="button" data-category="Beverage">Beverage</button>
             <button class="pos-category" type="button" data-category="Canned">Canned</button>
             <button class="pos-category" type="button" data-category="Alcohol">Alcohol</button>
+            <button class="pos-category" type="button" data-category="Coffee &amp; Tea">Coffee &amp; Tea</button>
+            <button class="pos-category" type="button" data-category="Biscuits">Biscuits</button>
+            <button class="pos-category" type="button" data-category="Chips">Chips</button>
+            <button class="pos-category" type="button" data-category="Condiments">Condiments</button>
+            <button class="pos-category" type="button" data-category="Noodles">Noodles</button>
           </div>
 
           <div class="pos-grid" id="posGrid">
-            <p style="grid-column: 1 / -1; color: #fff; text-align: center; padding: 20px;">Naglo-load ng mga produkto...</p>
+            <p style="grid-column:1 / -1; color:#fff; text-align:center; padding:20px;">Naglo-load ng mga produkto...</p>
           </div>
         </section>
 
@@ -126,7 +311,7 @@
           </div>
 
           <div class="pos-cart-items" id="cartContainer">
-            <p style="text-align:center; color:#9aa9a0; font-size:13px; margin: 20px 0;">Cart is empty</p>
+            <p style="text-align:center; color:#9aa9a0; font-size:13px; margin:20px 0;">Cart is empty</p>
           </div>
 
           <div class="pos-summary">
@@ -145,12 +330,12 @@
             <button class="pos-payment-btn" type="button" id="payCreditBtn">Credit</button>
           </div>
 
-          <div id="creditCustomerDiv" style="margin-top: 12px; display: none;">
-            <label for="customerNameInput" style="display: block; font-size: 0.85rem; font-weight: 700; color: #ffffff; margin-bottom: 4px;">Debtor / Customer Name</label>
-            <input type="text" id="customerNameInput" placeholder="Enter customer name" style="width: 100%; padding: 8px 12px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 0.9rem; outline: none; background: #ffffff; color: #000;">
+          <div id="creditCustomerDiv" style="margin-top:12px; display:none;">
+            <label for="customerNameInput" style="display:block; font-size:0.85rem; font-weight:700; color:#ffffff; margin-bottom:4px;">Debtor / Customer Name</label>
+            <input type="text" id="customerNameInput" placeholder="Enter customer name" style="width:100%; padding:8px 12px; border-radius:12px; border:1px solid #cbd5e1; font-size:0.9rem; outline:none; background:#ffffff; color:#000;">
           </div>
 
-          <button class="pos-complete-btn" id="completeSaleBtn" type="button" style="margin-top: 15px;">Complete Sale</button>
+          <button class="pos-complete-btn" id="completeSaleBtn" type="button" style="margin-top:15px;">Complete Sale</button>
         </aside>
 
       </div>
@@ -158,7 +343,7 @@
     </main>
   </div>
 
-  <script src="js/script.js?v=11.0" type="module"></script>
-  <script type="module" src="js/checkout.js?v=11.0"></script>
+  <script src="js/script.js?v=14.0" type="module"></script>
+  <script type="module" src="js/checkout.js?v=14.0"></script>
 </body>
 </html>

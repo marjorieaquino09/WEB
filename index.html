@@ -4,115 +4,148 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SARI - Authentication</title>
-  <link rel="stylesheet" href="css/style.css">
+  
+  <link rel="stylesheet" href="css/style.css?v=21.0">
+  <link rel="stylesheet" href="css/login.css?v=22.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body class="login-page">
 
   <div class="login-split-container" id="authContainer">
-    
-    <!-- GREEN BANNER (Sa kaliwa kapag Login, sa kanan kapag Signup) -->
-    <div class="login-left-banner">
-      <div class="banner-content-box">
-        <div class="banner-center-brand">
-          <div class="banner-logo-wrap">
+
+    <!-- LEFT BRAND BANNER -->
+    <div class="login-left-banner brand-section">
+      <div class="banner-content-box brand-content">
+
+        <div class="banner-center-brand brand-logo">
+          <div class="banner-logo-wrap logo-symbol">
             <img src="assets/sari-logo.jpg" alt="SARI Logo" class="banner-logo-img">
           </div>
           <h1 class="banner-brand-name">SARI</h1>
           <div class="banner-brand-subline">
             <span class="line-deco"></span>
-            <span class="subline-text">SARI-SARI STORE</span>
+            <span class="subline-text">SMART TINDAHAN</span>
             <span class="line-deco"></span>
           </div>
         </div>
+
+        <!-- TAGLINE SA GITNA -->
+        <p class="banner-cursive-tagline">
+          Welcome back — your smart tindahan is waiting
+        </p>
         
-        <p class="banner-cursive-tagline">Everyday Essentials, Just Around the Corner.</p>
-        
-        <div class="features-row-minimal">
-          <div class="feature-item-min">
-            <div class="feat-icon-circle"><i class="fa-solid fa-basket-shopping"></i></div>
-            <span>Fresh Products</span>
+        <!-- 4 CORE POS FEATURE ICONS -->
+        <div class="features-row-minimal features">
+          <div class="feature-item-min feature">
+            <div class="feat-icon-circle feature-icon">
+              <i class="fa-solid fa-cash-register"></i>
+            </div>
+            <span>POS Checkout</span>
           </div>
-          <div class="feature-item-min">
-            <div class="feat-icon-circle"><i class="fa-solid fa-bolt"></i></div>
-            <span>Quick & Easy</span>
+
+          <div class="feature-item-min feature">
+            <div class="feat-icon-circle feature-icon">
+              <i class="fa-solid fa-boxes-stacked"></i>
+            </div>
+            <span>Realtime Inventory</span>
           </div>
-          <div class="feature-item-min">
-            <div class="feat-icon-circle"><i class="fa-solid fa-shield-halved"></i></div>
-            <span>Safe & Secure</span>
+
+          <div class="feature-item-min feature">
+            <div class="feat-icon-circle feature-icon">
+              <i class="fa-solid fa-book-bookmark"></i>
+            </div>
+            <span>Credit Ledger</span>
           </div>
-          <div class="feature-item-min">
-            <div class="feat-icon-circle"><i class="fa-solid fa-heart"></i></div>
-            <span>For Our Community</span>
+
+          <div class="feature-item-min feature">
+            <div class="feat-icon-circle feature-icon">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <span>Sales Analytics</span>
           </div>
         </div>
+
       </div>
     </div>
 
-    <!-- WHITE FORM SECTION (Sa kanan kapag Login, lilipat sa KALIWA kapag Signup) -->
-    <div class="login-right-section" id="formSwitchSection">
+    <!-- RIGHT LOGIN / SIGNUP FORM -->
+    <div class="login-right-section form-section" id="formSwitchSection">
       
       <!-- LOGIN FORM -->
-      <div class="form-wrapper" id="loginFormWrapper">  
-        <div class="card-logo-top">
-          <div class="card-logo-wrap">
+      <div class="form-wrapper login-card" id="loginFormWrapper">
+
+        <div class="card-logo-top mobile-logo">
+          <div class="card-logo-wrap mobile-logo-icon">
             <img src="assets/sari-logo.jpg" alt="SARI Logo" class="card-logo-img">
           </div>
+          <h2>SARI <span>STORE</span></h2>
         </div>
-        <h2 class="welcome-title">Welcome back!</h2>
-        <p class="subtitle">Log in to manage your store.</p>
 
-        <div id="loginErrorBox" class="error-message"></div>
+        <div class="login-header">
+          <h2 class="welcome-title">Welcome back!</h2>
+          <p class="subtitle">Log in to manage your store.</p>
+        </div>
+
+        <div id="loginErrorBox" class="error-message" role="alert" style="display:none;"></div>
 
         <form id="loginForm">
           <div class="input-group">
             <label for="loginEmail">Email Address</label>
-            <div class="input-field-box">
+            <div class="input-field-box input-wrapper">
               <i class="fa-solid fa-envelope field-icon"></i>
-              <input type="email" id="loginEmail" placeholder="owner@example.com" required>
+              <input type="email" id="loginEmail" name="email" placeholder="owner@example.com" autocomplete="email" required>
             </div>
           </div>
 
           <div class="input-group">
             <label for="loginPassword">Password</label>
-            <div class="input-field-box password-wrapper">
+            <div class="input-field-box input-wrapper password-wrapper">
               <i class="fa-solid fa-lock field-icon"></i>
-              <input type="password" id="loginPassword" placeholder="Enter your password" required>
-              <i class="fa-solid fa-eye toggle-eye" id="toggleLoginPassword"></i>
+              <input type="password" id="loginPassword" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+              <button type="button" class="toggle-eye password-toggle" id="toggleLoginPassword" aria-label="Show password">
+                <i class="fa-solid fa-eye"></i>
+              </button>
             </div>
           </div>
 
-          <div class="forgot-wrapper">
-            <a href="#" class="forgot-link">Forgot Password?</a>
+          <div class="forgot-wrapper forgot-row">
+            <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
           </div>
 
-          <button type="submit" class="btn-login">
-            <i class="fa-solid fa-arrow-right"></i> Log In
+          <button type="submit" id="btnLogin" class="btn-login login-button">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span>Log In</span>
           </button>
         </form>
 
         <p class="signup-text">
           Don't have an account? <a href="#" id="switchToSignup">Sign Up</a>
         </p>
+
       </div>
 
       <!-- SIGN UP FORM -->
-      <div class="form-wrapper" id="signupFormWrapper" style="display: none;">
-        <div class="card-logo-top">
-          <div class="card-logo-wrap">
+      <div class="form-wrapper login-card" id="signupFormWrapper" style="display: none;">
+
+        <div class="card-logo-top mobile-logo">
+          <div class="card-logo-wrap mobile-logo-icon">
             <img src="assets/sari-logo.jpg" alt="SARI Logo" class="card-logo-img">
           </div>
+          <h2>SARI <span>STORE</span></h2>
         </div>
-        <h2 class="welcome-title">Create Account</h2>
-        <p class="subtitle">Sign up to start managing your store.</p>
 
-        <div id="signupErrorBox" class="error-message"></div>
+        <div class="login-header">
+          <h2 class="welcome-title">Create Account</h2>
+          <p class="subtitle">Sign up to start managing your store.</p>
+        </div>
+
+        <div id="signupErrorBox" class="error-message" role="alert" style="display:none;"></div>
 
         <form id="signupForm">
           <div class="input-group">
             <label for="signupName">Store / Owner Name</label>
-            <div class="input-field-box">
+            <div class="input-field-box input-wrapper">
               <i class="fa-solid fa-user field-icon"></i>
               <input type="text" id="signupName" placeholder="Juan Dela Cruz" required>
             </div>
@@ -120,7 +153,7 @@
 
           <div class="input-group">
             <label for="signupEmail">Email Address</label>
-            <div class="input-field-box">
+            <div class="input-field-box input-wrapper">
               <i class="fa-solid fa-envelope field-icon"></i>
               <input type="email" id="signupEmail" placeholder="owner@example.com" required>
             </div>
@@ -128,21 +161,25 @@
 
           <div class="input-group">
             <label for="signupPassword">Password</label>
-            <div class="input-field-box password-wrapper">
+            <div class="input-field-box input-wrapper password-wrapper">
               <i class="fa-solid fa-lock field-icon"></i>
               <input type="password" id="signupPassword" placeholder="Create a password" required>
-              <i class="fa-solid fa-eye toggle-eye" id="toggleSignupPassword"></i>
+              <button type="button" class="toggle-eye password-toggle" id="toggleSignupPassword" aria-label="Show password">
+                <i class="fa-solid fa-eye"></i>
+              </button>
             </div>
           </div>
 
-          <button type="submit" class="btn-login">
-            <i class="fa-solid fa-user-plus"></i> Sign Up
+          <button type="submit" class="btn-login login-button">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Sign Up</span>
           </button>
         </form>
 
         <p class="signup-text">
           Already have an account? <a href="#" id="switchToLogin">Log In</a>
         </p>
+
       </div>
 
     </div>
@@ -255,8 +292,9 @@
       toggleLoginPassword.addEventListener("click", () => {
         const type = loginPasswordInput.getAttribute("type") === "password" ? "text" : "password";
         loginPasswordInput.setAttribute("type", type);
-        toggleLoginPassword.classList.toggle("fa-eye");
-        toggleLoginPassword.classList.toggle("fa-eye-slash");
+        const icon = toggleLoginPassword.querySelector("i") || toggleLoginPassword;
+        icon.classList.toggle("fa-eye");
+        icon.classList.toggle("fa-eye-slash");
       });
     }
 
@@ -266,8 +304,9 @@
       toggleSignupPassword.addEventListener("click", () => {
         const type = signupPasswordInput.getAttribute("type") === "password" ? "text" : "password";
         signupPasswordInput.setAttribute("type", type);
-        toggleSignupPassword.classList.toggle("fa-eye");
-        toggleSignupPassword.classList.toggle("fa-eye-slash");
+        const icon = toggleSignupPassword.querySelector("i") || toggleSignupPassword;
+        icon.classList.toggle("fa-eye");
+        icon.classList.toggle("fa-eye-slash");
       });
     }
   </script>

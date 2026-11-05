@@ -115,7 +115,9 @@ function renderLedger() {
   const search = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
   const filtered = allCredits.filter((c) => {
-    return !search || (c.customerName && c.customerName.toLowerCase().includes(search));
+    const nameMatch = c.customerName && c.customerName.toLowerCase().includes(search);
+    const phoneMatch = c.phone && c.phone.toLowerCase().includes(search);
+    return !search || nameMatch || phoneMatch;
   });
 
   let totalOwed = 0;
@@ -126,6 +128,7 @@ function renderLedger() {
     if (c.customerName) uniqueCustomers.add(c.customerName);
     if (!c.isPaid) {
       totalOwed += Number(c.amount || 0);
+      if (c.isOverdue) overdueCount++;
     }
   });
 
@@ -144,7 +147,7 @@ function renderLedger() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align: center; color: #7c8b82; padding: 24px;">No customer credit records found.</td>
+        <td colspan="7" style="text-align: center; color: #94a3b8; padding: 30px;">No customer credit records found.</td>
       </tr>
     `;
     return;
@@ -157,29 +160,31 @@ function renderLedger() {
     const hasDebt = !isPaid && amount > 0;
 
     const statusPill = isPaid
-      ? `<span class="status-pill in-stock" style="background:#dcfce7; color:#15803d; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.75rem;">Paid</span>`
-      : `<span class="status-pill out-of-stock" style="background:#fee2e2; color:#b91c1c; padding:3px 10px; border-radius:12px; font-weight:700; font-size:0.75rem;">Unpaid</span>`;
+      ? `<span style="background:#dcfce7; color:#15803d; padding:4px 12px; border-radius:20px; font-weight:800; font-size:11px;">Paid</span>`
+      : `<span style="background:#fee2e2; color:#dc2626; padding:4px 12px; border-radius:20px; font-weight:800; font-size:11px;">Unpaid</span>`;
 
     const actionBtn = hasDebt
-      ? `<button type="button" class="action-btn btn-mark-paid" data-id="${cred.id}" data-name="${cred.customerName}" data-amount="${amount}" style="background: #4a9c62; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">
+      ? `<button type="button" class="btn-mark-paid" data-id="${cred.id}" data-name="${cred.customerName}" data-amount="${amount}" style="background: #164a41; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 800; transition: background 0.15s ease;">
           <i class="fa-solid fa-check"></i> Paid
         </button>`
-      : `<span style="color: #9aa9a0; font-size: 12px; font-style: italic;">Settled</span>`;
+      : `<span style="color: #94a3b8; font-size: 12px; font-style: italic;">Settled</span>`;
+
+    const displayDate = cred.date || (cred.createdAt ? new Date(cred.createdAt.toDate()).toLocaleDateString() : 'N/A');
 
     return `
-      <tr style="border-bottom: 1px solid #f1f5f9;">
-        <td style="padding: 10px;">
-          <div class="product-cell" style="display: flex; align-items: center; gap: 10px; font-weight: 700;">
-            <span class="avatar-dot" style="background:#4a9c62; color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px;">${initials}</span> 
+      <tr>
+        <td>
+          <div style="display: flex; align-items: center; gap: 10px; font-weight: 800;">
+            <span style="background:#164a41; color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px;">${initials}</span> 
             ${cred.customerName || ''}
           </div>
         </td>
-        <td style="padding: 10px; color: #64748b;">${cred.date || 'N/A'}</td>
-        <td style="padding: 10px; font-weight: 700;" class="price-cell">₱${amount.toFixed(2)}</td>
-        <td style="padding: 10px;" class="price-cell">₱2,000.00</td>
-        <td style="padding: 10px; color: #64748b;">${cred.date || 'N/A'}</td>
-        <td style="padding: 10px;">${statusPill}</td>
-        <td style="padding: 10px; text-align: center;" class="actions-cell">${actionBtn}</td>
+        <td style="color: #64748b;">${cred.phone || 'N/A'}</td>
+        <td style="font-weight: 800;">₱${amount.toFixed(2)}</td>
+        <td style="color: #64748b;">₱${(cred.creditLimit || 2000).toLocaleString('en-US')}</td>
+        <td style="color: #64748b;">${displayDate}</td>
+        <td>${statusPill}</td>
+        <td style="text-align: center;">${actionBtn}</td>
       </tr>
     `;
   }).join("");
@@ -215,6 +220,88 @@ async function markPaid(creditId, customerName, paidAmount) {
       alert("Failed to process payment: " + error.message);
     }
   }
+}
+
+/* MODAL CONTROLS & ADD CREDIT FORM */
+const modal = document.getElementById("addCreditModal");
+const openModalBtn = document.getElementById("openAddModalBtn");
+const closeModalBtn = document.getElementById("closeAddModalBtn");
+const addCreditForm = document.getElementById("addCreditForm");
+
+if (openModalBtn) {
+  openModalBtn.addEventListener("click", () => {
+    if (modal) modal.classList.add("active");
+  });
+}
+
+if (closeModalBtn) {
+  closeModalBtn.addEventListener("click", () => {
+    if (modal) modal.classList.remove("active");
+  });
+}
+
+if (modal) {
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.classList.remove("active");
+    }
+  });
+}
+
+if (addCreditForm) {
+  addCreditForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (!currentUserId) {
+      alert("User not authenticated.");
+      return;
+    }
+
+    const name = document.getElementById("newCustomerName").value.trim();
+    const phone = document.getElementById("newCustomerPhone").value.trim();
+    const amount = Number(document.getElementById("newCreditAmount").value);
+    const notes = document.getElementById("newCreditNotes").value.trim();
+    const saveBtn = document.getElementById("btnSaveCredit");
+
+    if (!name || isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid customer name and credit amount.");
+      return;
+    }
+
+    try {
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Saving...";
+      }
+
+      const todayStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+      await addDoc(collection(db, "credits"), {
+        userId: currentUserId,
+        customerName: name,
+        phone: phone || "N/A",
+        amount: amount,
+        notes: notes || "",
+        isPaid: false,
+        date: todayStr,
+        createdAt: serverTimestamp()
+      });
+
+      alert("Credit record added successfully!");
+      addCreditForm.reset();
+      if (modal) modal.classList.remove("active");
+      loadCreditLedger();
+
+    } catch (err) {
+      console.error("Error adding credit record:", err);
+      alert("Failed to add credit record: " + err.message);
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerText = "Save Credit Record";
+      }
+    }
+  });
 }
 
 const searchInputEl = document.getElementById("searchCustomerInput");

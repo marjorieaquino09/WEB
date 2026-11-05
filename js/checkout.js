@@ -1,24 +1,34 @@
-import { db, auth } from "./firebase-config.js";
+import { db } from "./firebase-config.js";
 import { checkAuth, logoutUser } from "./auth.js";
+import { startBarcodeScanner, stopBarcodeScanner, isScannerRunning, sameBarcode } from "./scanner.js";
 import { 
   collection, 
-  query, 
-  where, 
+  query,
+  where,
   onSnapshot, 
-  addDoc, 
   doc, 
   getDoc, 
   serverTimestamp,
-  writeBatch
+  writeBatch,
+  deleteDoc,
+  increment
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 let currentUserId = null;
 let allProducts = [];
+let inventoryItems = [];
+let legacyItems = [];
 let cart = [];
 let selectedCategory = "All";
 let searchQuery = "";
 let paymentMethod = "Cash";
-let html5QrCode = null;
+
+let remoteCartItems = null;
+let productsLoaded = false;
+let inventoryReady = false;
+let legacyReady = false;
+let pendingRemoteApply = false;
+let hadRemoteCart = false;
 
 checkAuth(async (user) => {
   currentUserId = user.uid;
@@ -71,19 +81,212 @@ checkAuth(async (user) => {
   }
 
   loadProductsRealtime();
+  listenRemoteCart();
 });
 
-function loadProductsRealtime() {
-  const q = query(collection(db, "products"), where("userId", "==", currentUserId));
+const SIZE_RE = /\b\d+(?:\.\d+)?\s?(?:ml|l|g|kg|oz|pcs|pc)\b/g;
+const STOP_WORDS = new Set(["sachet", "pack", "pc", "pcs", "piece", "and", "the", "of"]);
 
-  onSnapshot(q, (querySnapshot) => {
-    allProducts = [];
-    querySnapshot.forEach((docSnap) => {
-      allProducts.push({ id: docSnap.id, ...docSnap.data() });
-    });
+function hasBarcode(item) {
+  const bc = String(item.barcode || "").trim();
+  return bc !== "" && bc.toUpperCase() !== "N/A";
+}
 
-    renderProducts();
+function nameInfo(item) {
+  const raw = String(item.name || "").toLowerCase().replace(/['’`]/g, "");
+  const sizes = (raw.match(SIZE_RE) || []).map((s) => s.replace(/\s/g, ""));
+  const words = raw
+    .replace(SIZE_RE, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter((w) => w && !STOP_WORDS.has(w))
+    .map((w) => (w.length > 4 ? w.replace(/ing$/, "") : w));
+  return { sizes, words, compact: words.join("") };
+}
+
+function isSameProduct(a, b) {
+  const aHas = hasBarcode(a);
+  const bHas = hasBarcode(b);
+
+  if (aHas && bHas) {
+    return sameBarcode(a.barcode, b.barcode);
+  }
+
+  const x = nameInfo(a);
+  const y = nameInfo(b);
+  if (!x.compact || !y.compact) return false;
+
+  if (x.sizes.length && y.sizes.length && x.sizes.join() !== y.sizes.join()) {
+    return false;
+  }
+
+  if (x.compact === y.compact) return true;
+
+  const [small, large] = x.words.length <= y.words.length ? [x, y] : [y, x];
+  return (
+    small.words.length >= 2 &&
+    large.words.length - small.words.length <= 1 &&
+    small.words.every((w) => large.words.includes(w))
+  );
+}
+
+function rebuildProducts() {
+  const sorted = [...inventoryItems, ...legacyItems].sort((a, b) => {
+    const barcodeDiff = Number(hasBarcode(b)) - Number(hasBarcode(a));
+    if (barcodeDiff !== 0) return barcodeDiff;
+
+    const stockDiff = Number(b.stock || 0) - Number(a.stock || 0);
+    if (stockDiff !== 0) return stockDiff;
+
+    return Number(b.src === "inventory") - Number(a.src === "inventory");
   });
+
+  const groups = [];
+
+  sorted.forEach((item) => {
+    const group = groups.find((g) => isSameProduct(g, item));
+
+    if (!group) {
+      groups.push({ ...item });
+      return;
+    }
+
+    if (!(Number(group.price) > 0) && Number(item.price) > 0) group.price = item.price;
+    if (!hasBarcode(group) && hasBarcode(item)) group.barcode = item.barcode;
+    if (!group.image && !group.imageUrl) group.image = item.image || item.imageUrl;
+  });
+
+  allProducts = groups;
+
+  productsLoaded = inventoryReady && legacyReady;
+  if (!productsLoaded) return;
+
+  renderProducts();
+
+  if (pendingRemoteApply) {
+    pendingRemoteApply = false;
+    applyRemoteCart();
+  }
+}
+
+function loadProductsRealtime() {
+  onSnapshot(
+    collection(db, "users", currentUserId, "inventory"),
+    (snapshot) => {
+      inventoryItems = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (!data.hidden) {
+          inventoryItems.push({ id: docSnap.id, ...data, src: "inventory" });
+        }
+      });
+      inventoryReady = true;
+      rebuildProducts();
+    },
+    (err) => {
+      console.error("Inventory load error:", err);
+      inventoryReady = true;
+      rebuildProducts();
+    }
+  );
+
+  onSnapshot(
+    query(collection(db, "products"), where("userId", "==", currentUserId)),
+    (snapshot) => {
+      legacyItems = [];
+      snapshot.forEach((docSnap) => {
+        legacyItems.push({ id: docSnap.id, ...docSnap.data(), src: "products" });
+      });
+      legacyReady = true;
+      rebuildProducts();
+    },
+    (err) => {
+      console.error("Products load error:", err);
+      legacyReady = true;
+      rebuildProducts();
+    }
+  );
+}
+
+function cartDocRef() {
+  return doc(db, "users", currentUserId, "cart", "current");
+}
+
+function listenRemoteCart() {
+  onSnapshot(
+    cartDocRef(),
+    (snap) => {
+      const items = snap.exists() ? snap.data().items : null;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        if (hadRemoteCart) {
+          cart = [];
+          renderCart();
+        }
+        hadRemoteCart = false;
+        remoteCartItems = null;
+        return;
+      }
+
+      hadRemoteCart = true;
+      remoteCartItems = items;
+      applyRemoteCart();
+    },
+    (err) => console.error("Cart sync error:", err)
+  );
+}
+
+function applyRemoteCart() {
+  if (!remoteCartItems) return;
+
+  if (!productsLoaded) {
+    pendingRemoteApply = true;
+    return;
+  }
+
+  cart = remoteCartItems.map((r) => {
+    const qty = Number(r.quantity || 1);
+    const match = allProducts.find(
+      (p) =>
+        (r.barcode && p.barcode && sameBarcode(p.barcode, r.barcode)) ||
+        p.id === r.productId ||
+        (r.name && normName(p.name) === normName(r.name))
+    );
+
+    if (match && !r.skipInventory) {
+      return {
+        id: match.id,
+        src: match.src,
+        name: match.name || r.name || "",
+        price: Number(match.price || r.price || 0),
+        quantity: qty,
+        stock: Number(match.stock || 0),
+        image: match.image || match.imageUrl || r.imageUrl || "default.jpg",
+        barcode: match.barcode || r.barcode || ""
+      };
+    }
+
+    return {
+      id: null,
+      src: null,
+      name: r.name || "Item",
+      price: Number(r.price || 0),
+      quantity: qty,
+      stock: 999999,
+      image: r.imageUrl || "default.jpg",
+      barcode: r.barcode || "",
+      skipInventory: true
+    };
+  });
+
+  renderCart();
+}
+
+function resolveImage(raw) {
+  if (!raw) return "uploads/default.jpg";
+  if (raw.startsWith("http") || raw.startsWith("data:") || raw.startsWith("uploads/")) return raw;
+  return `uploads/${raw}`;
 }
 
 function renderProducts() {
@@ -105,7 +308,10 @@ function renderProducts() {
       }
     }
 
-    const matchSearch = !searchQuery || (p.name && p.name.toLowerCase().includes(searchQuery.toLowerCase())) || (p.barcode && p.barcode.includes(searchQuery));
+    const matchSearch =
+      !searchQuery ||
+      (p.name && p.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (p.barcode && String(p.barcode).includes(searchQuery));
     return matchCat && matchSearch;
   });
 
@@ -118,17 +324,7 @@ function renderProducts() {
     const stock = Number(p.stock || 0);
     const price = Number(p.price || 0);
     const isAvailable = stock > 0;
-
-    let imgSource = "uploads/default.jpg";
-    if (p.image) {
-      if (p.image.startsWith("http") || p.image.startsWith("data:")) {
-        imgSource = p.image;
-      } else if (p.image.startsWith("uploads/")) {
-        imgSource = p.image;
-      } else {
-        imgSource = `uploads/${p.image}`;
-      }
-    }
+    const imgSource = resolveImage(p.image || p.imageUrl);
 
     return `
       <div class="pos-product-card" data-id="${p.id}" style="opacity: ${isAvailable ? '1' : '0.5'}; cursor: ${isAvailable ? 'pointer' : 'not-allowed'}; display: flex; flex-direction: column; align-items: center; text-align: center;">
@@ -166,11 +362,13 @@ function addToCart(productId) {
   } else {
     cart.push({
       id: product.id,
+      src: product.src,
       name: product.name,
       price: Number(product.price || 0),
       quantity: 1,
       stock: Number(product.stock),
-      image: product.image || 'default.jpg'
+      image: product.image || product.imageUrl || 'default.jpg',
+      barcode: product.barcode || ""
     });
   }
 
@@ -194,17 +392,7 @@ function renderCart() {
   cartContainer.innerHTML = cart.map((item, idx) => {
     const itemTotal = item.price * item.quantity;
     total += itemTotal;
-
-    let imgSource = "uploads/default.jpg";
-    if (item.image) {
-      if (item.image.startsWith("http") || item.image.startsWith("data:")) {
-        imgSource = item.image;
-      } else if (item.image.startsWith("uploads/")) {
-        imgSource = item.image;
-      } else {
-        imgSource = `uploads/${item.image}`;
-      }
-    }
+    const imgSource = resolveImage(item.image);
 
     return `
       <div class="pos-cart-item">
@@ -293,27 +481,36 @@ if (completeSaleBtn) {
       return;
     }
 
+    const overStock = cart.find((i) => !i.skipInventory && i.quantity > i.stock);
+    if (overStock) {
+      alert(`Kulang ang stock ng ${overStock.name} (available: ${overStock.stock}).`);
+      return;
+    }
+
     try {
       completeSaleBtn.disabled = true;
       completeSaleBtn.innerText = "Processing...";
 
       const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const finalCustomer = paymentMethod === "Credit" ? customerName : "Walk-in Customer";
+      const batch = writeBatch(db);
 
-      const txnRef = await addDoc(collection(db, "transactions"), {
+      const txnRef = doc(collection(db, "transactions"));
+      batch.set(txnRef, {
         userId: currentUserId,
         items: cart,
         totalAmount: totalAmount,
         paymentMethod: paymentMethod,
-        customerName: paymentMethod === "Credit" ? customerName : "Walk-in Customer",
+        customerName: finalCustomer,
         createdAt: serverTimestamp()
       });
 
       if (paymentMethod === "Credit") {
-        await addDoc(collection(db, "credits"), {
+        batch.set(doc(collection(db, "credits")), {
           userId: currentUserId,
           customerName: customerName,
           amount: Number(totalAmount),
-          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
           isPaid: false,
           saleId: txnRef.id,
           createdAt: serverTimestamp(),
@@ -321,13 +518,51 @@ if (completeSaleBtn) {
         });
       }
 
-      const batch = writeBatch(db);
-      cart.forEach((item) => {
-        const prodRef = doc(db, "products", item.id);
-        batch.update(prodRef, { stock: Math.max(0, item.stock - item.quantity) });
+      for (const item of cart) {
+        if (item.skipInventory || !item.id) continue;
+
+        if (item.src === "products") {
+          batch.update(doc(db, "products", item.id), {
+            stock: increment(-item.quantity)
+          });
+        } else {
+          batch.update(doc(db, "users", currentUserId, "inventory", item.id), {
+            stock: increment(-item.quantity),
+            updatedAt: serverTimestamp()
+          });
+        }
+      }
+
+      const orderRef = doc(collection(db, "orders"));
+      batch.set(orderRef, {
+        orderId: orderRef.id,
+        items: cart.map((i) => ({
+          barcode: i.barcode || i.id || "",
+          id: i.barcode || i.id || "",
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          subtotal: i.price * i.quantity,
+          ...(i.skipInventory ? { skipInventory: true } : {})
+        })),
+        totalAmount: totalAmount,
+        paymentMethod: paymentMethod === "Credit" ? "Credit / Utang" : "Cash",
+        customerName: finalCustomer,
+        userId: currentUserId,
+        status: "completed",
+        source: "web_app",
+        createdAtMs: Date.now(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
 
       await batch.commit();
+
+      try {
+        await deleteDoc(cartDocRef());
+      } catch (e) {
+        console.warn("Hindi nabura ang shared cart:", e);
+      }
 
       alert("Sale completed successfully!");
       cart = [];
@@ -346,9 +581,14 @@ if (completeSaleBtn) {
 
 const clearCartBtn = document.getElementById("clearCartBtn");
 if (clearCartBtn) {
-  clearCartBtn.addEventListener("click", () => {
+  clearCartBtn.addEventListener("click", async () => {
     cart = [];
     renderCart();
+    try {
+      await deleteDoc(cartDocRef());
+    } catch (e) {
+      console.warn("Hindi nabura ang shared cart:", e);
+    }
   });
 }
 
@@ -369,79 +609,81 @@ document.querySelectorAll(".pos-category").forEach((btn) => {
   });
 });
 
+function normName(s) {
+  return String(s || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function findProductByCode(code) {
+  return allProducts.find((p) => p.barcode && sameBarcode(p.barcode, code)) || null;
+}
+
+async function handleScannedCode(rawCode) {
+  const code = String(rawCode || "").trim();
+  if (!code) return false;
+  console.log("SCANNED:", code);
+
+  const product = findProductByCode(code);
+  if (product) {
+    addToCart(product.id);
+    return true;
+  }
+  alert(`Walang nakitang produkto para sa code na ito: ${code}`);
+  return false;
+}
+
 const startScanBtn = document.getElementById("startScanBtn");
 if (startScanBtn) {
-  startScanBtn.addEventListener("click", () => {
-    const readerDiv = document.getElementById("reader");
-    
-    if (readerDiv.style.display === "none" || !readerDiv.style.display) {
-      readerDiv.style.display = "block";
-      
-      Html5Qrcode.getCameras().then(devices => {
-        if (devices && devices.length) {
-          const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
-          
-          const scanConfig = {
-            fps: 30,
-            qrbox: { width: 320, height: 160 },
-            aspectRatio: 1.777778,
-            formatsToSupport: [
-              Html5QrcodeSupportedFormats.EAN_13,
-              Html5QrcodeSupportedFormats.EAN_8,
-              Html5QrcodeSupportedFormats.UPC_A,
-              Html5QrcodeSupportedFormats.UPC_E,
-              Html5QrcodeSupportedFormats.CODE_128,
-              Html5QrcodeSupportedFormats.CODE_39
-            ],
-            experimentalFeatures: {
-              useBarCodeDetectorIfSupported: true
-            }
-          };
-
-          html5QrCode = new Html5Qrcode("reader");
-          html5QrCode.start(
-            cameraId, 
-            scanConfig,
-            (decodedText) => {
-              const scannedCode = decodedText.trim();
-              const foundProduct = allProducts.find(p => p.barcode === scannedCode || (p.name && p.name.toLowerCase().includes(scannedCode.toLowerCase())));
-
-              if (foundProduct) {
-                addToCart(foundProduct.id);
-                alert(`Na-scan at nai-add sa cart: ${foundProduct.name}`);
-              } else {
-                alert(`Walang nakitang produkto para sa code na ito: ${scannedCode}`);
-              }
-              
-              html5QrCode.stop().then(() => {
-                readerDiv.style.display = "none";
-              }).catch(err => console.error("Error stopping scanner:", err));
-            },
-            (errorMessage) => {}
-          ).catch(err => {
-            console.error("Hindi ma-access ang camera:", err);
-            alert("Hindi ma-access ang camera. Siguraduhing naka-allow ito.");
-            readerDiv.style.display = "none";
-          });
-        } else {
-          alert("Walang nakitang camera device.");
-          readerDiv.style.display = "none";
-        }
-      }).catch(err => {
-        console.error("Error getting cameras:", err);
-        readerDiv.style.display = "none";
-      });
-    } else {
-      if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-          readerDiv.style.display = "none";
-        }).catch(err => console.error(err));
-      } else {
-        readerDiv.style.display = "none";
-      }
+  startScanBtn.addEventListener("click", async () => {
+    if (isScannerRunning()) {
+      await stopBarcodeScanner("reader");
+      return;
     }
+
+    await startBarcodeScanner({
+      readerId: "reader",
+      onDetected: (scannedCode) => {
+        handleScannedCode(scannedCode);
+      }
+    });
   });
 }
+
+if (posSearch) {
+  posSearch.addEventListener("keydown", async (e) => {
+    if (e.key !== "Enter") return;
+    const code = posSearch.value.trim();
+    if (!/^\d{6,}$/.test(code)) return;
+    e.preventDefault();
+
+    const ok = await handleScannedCode(code);
+    if (ok) {
+      posSearch.value = "";
+      searchQuery = "";
+      renderProducts();
+    }
+    posSearch.focus();
+  });
+}
+
+let wedgeBuffer = "";
+let wedgeLast = 0;
+document.addEventListener("keydown", async (e) => {
+  const tag = (document.activeElement && document.activeElement.tagName) || "";
+  if (["INPUT", "TEXTAREA", "SELECT"].includes(tag)) return;
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+  const now = Date.now();
+  if (now - wedgeLast > 80) wedgeBuffer = "";
+  wedgeLast = now;
+
+  if (e.key === "Enter") {
+    const code = wedgeBuffer;
+    wedgeBuffer = "";
+    if (/^\d{6,}$/.test(code)) await handleScannedCode(code);
+    return;
+  }
+  if (e.key.length === 1) wedgeBuffer += e.key;
+});
 
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {

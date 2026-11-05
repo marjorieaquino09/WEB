@@ -449,51 +449,55 @@ a.nav-icon{ text-decoration:none; }
   .form-grid{ grid-template-columns: 1fr; }
   .edit-profile-btn{ position:static; margin-top:16px; }
 }
+
 /* ========================================================== */
 /* GLOBAL THEMES (SIDEBAR & ACTIVE HIGHLIGHTS OVERRIDE)       */
+/* data-theme values: "nordic", "emerald"  ("default" = none) */
 /* ========================================================== */
 
-/* NORDIC THEME */
-[data-theme="nordic"] .sidebar,
-[data-theme="nordic"] aside.sidebar,
-[data-theme="nordic"] .icon-sidebar,
+/* ---------- NORDIC ---------- */
 html[data-theme="nordic"] .sidebar,
-body[data-theme="nordic"] .sidebar,
-html[data-theme="nordic"] .icon-sidebar,
-body[data-theme="nordic"] .icon-sidebar {
+html[data-theme="nordic"] aside.sidebar,
+html[data-theme="nordic"] .icon-sidebar {
   background-color: #29313a !important;
 }
 
-[data-theme="nordic"] .sidebar-link.active,
-[data-theme="nordic"] .icon-nav-link.active {
+html[data-theme="nordic"] .sidebar-link.active,
+html[data-theme="nordic"] .icon-nav-link.active {
   background-color: #f472b6 !important;
   color: #1e242b !important;
 }
 
-[data-theme="nordic"] .sidebar-link.active .sidebar-icon,
-[data-theme="nordic"] .icon-nav-link.active i {
+html[data-theme="nordic"] .sidebar-link.active .sidebar-icon,
+html[data-theme="nordic"] .icon-nav-link.active i {
   background-color: #1e242b !important;
   color: #f472b6 !important;
 }
-[data-theme="the-best"] .sidebar,
-[data-theme="the-best"] aside.sidebar,
-[data-theme="the-best"] .icon-sidebar,
+
+/* ---------- EMERALD GOLD ---------- */
+/* "the-best" is kept as an alias so old saved values still work */
+html[data-theme="emerald"] .sidebar,
+html[data-theme="emerald"] aside.sidebar,
+html[data-theme="emerald"] .icon-sidebar,
 html[data-theme="the-best"] .sidebar,
-body[data-theme="the-best"] .sidebar,
-html[data-theme="the-best"] .icon-sidebar,
-body[data-theme="the-best"] .icon-sidebar {
-  background-color: #1C332B !important;
+html[data-theme="the-best"] aside.sidebar,
+html[data-theme="the-best"] .icon-sidebar {
+  background-color: #1c332b !important;
 }
 
-[data-theme="the-best"] .sidebar-link.active,
-[data-theme="the-best"] .icon-nav-link.active {
-  background-color: #F59E0B !important;
-  color: #14231D !important;
+html[data-theme="emerald"] .sidebar-link.active,
+html[data-theme="emerald"] .icon-nav-link.active,
+html[data-theme="the-best"] .sidebar-link.active,
+html[data-theme="the-best"] .icon-nav-link.active {
+  background-color: #f59e0b !important;
+  color: #14231d !important;
   font-weight: 800 !important;
 }
 
-[data-theme="the-best"] .sidebar-link.active .sidebar-icon,
-[data-theme="the-best"] .icon-nav-link.active i {
-  background-color: #14231D !important;
-  color: #F59E0B !important;
+html[data-theme="emerald"] .sidebar-link.active .sidebar-icon,
+html[data-theme="emerald"] .icon-nav-link.active i,
+html[data-theme="the-best"] .sidebar-link.active .sidebar-icon,
+html[data-theme="the-best"] .icon-nav-link.active i {
+  background-color: #14231d !important;
+  color: #f59e0b !important;
 }

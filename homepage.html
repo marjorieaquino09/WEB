@@ -1,14 +1,36 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SARI - Home</title>
-  <link rel="stylesheet" href="css/dashboard.css?v=12.0">
-  <link rel="stylesheet" href="css/inventory.css?v=12.0">
-  <link rel="stylesheet" href="css/extra.css?v=12.0">
+
+  <link rel="stylesheet" href="css/dashboard.css?v=13.0">
+  <link rel="stylesheet" href="css/inventory.css?v=13.0">
+  <link rel="stylesheet" href="css/extra.css?v=13.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css?v=12.0">
+  <link rel="stylesheet" href="css/style.css?v=13.0">
+
+  /* ALL-PAGE UNIFORM SIDEBAR ACTIVE SELECTOR */
+.sidebar-nav li.active,
+.sidebar-nav li.active a,
+.sidebar-nav .sidebar-link.active,
+.sidebar-link.active,
+a.sidebar-link[aria-current="page"] {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+}
+
+/* ACTIVE ICON STYLING */
+.sidebar-nav li.active .sidebar-icon,
+.sidebar-link.active .sidebar-icon {
+    background-color: #9dc88d !important;
+    color: #4d774e !important;
+}
+  </style>
 </head>
 <body class="app-page">
 
@@ -16,48 +38,74 @@
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <a href="homepage.html" class="sidebar-logo">Sari</a>
+        <a href="homepage.html" class="sidebar-logo">
+          <img src="assets/sari-logo.jpg" alt="Sari Logo" class="sidebar-logo-img">
+          <span>Sari</span>
+        </a>
       </div>
 
       <nav class="sidebar-nav">
-        <a href="homepage.html" class="sidebar-link active">
-          <span class="sidebar-icon"><i class="fa-solid fa-house"></i></span>
+        <a href="homepage.html" class="sidebar-link" aria-current="page">
+          <span class="sidebar-icon">
+            <i class="fa-solid fa-house"></i>
+          </span>
           <span class="sidebar-label">Home</span>
         </a>
+
         <a href="inventory.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-box"></i></span>
+          <span class="sidebar-icon">
+            <i class="fa-solid fa-box"></i>
+          </span>
           <span class="sidebar-label">Inventory</span>
         </a>
+
         <a href="checkout.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-cash-register"></i></span>
+          <span class="sidebar-icon">
+            <i class="fa-solid fa-cash-register"></i>
+          </span>
           <span class="sidebar-label">Checkout</span>
         </a>
+
         <a href="dashboard.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-chart-pie"></i></span>
+          <span class="sidebar-icon">
+            <i class="fa-solid fa-chart-pie"></i>
+          </span>
           <span class="sidebar-label">Dashboard</span>
         </a>
+
         <a href="credit-ledger.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-money-check-dollar"></i></span>
+          <span class="sidebar-icon">
+            <i class="fa-solid fa-money-check-dollar"></i>
+          </span>
           <span class="sidebar-label">Credit Ledger</span>
         </a>
+
         <a href="transactions.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-receipt"></i></span>
+          <span class="sidebar-icon">
+            <i class="fa-solid fa-receipt"></i>
+          </span>
           <span class="sidebar-label">Transactions</span>
         </a>
-        <a href="settings.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-gear"></i></span>
-          <span class="sidebar-label">Settings</span>
-        </a>
+
         <a href="profile.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-user"></i></span>
-          <span class="sidebar-label">My Profile</span>
+          <span class="sidebar-icon">
+            <i class="fa-solid fa-user"></i>
+          </span>
+          <span class="sidebar-label">Profile &amp; Settings</span>
         </a>
       </nav>
 
       <div class="sidebar-spacer"></div>
 
-      <button id="logoutBtn" class="sidebar-logout" style="background:none; border:none; cursor:pointer; width:100%; text-align:left; color:inherit;">
-        <span class="sidebar-icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
+      <button
+        id="logoutBtn"
+        class="sidebar-logout"
+        type="button"
+        style="background:none; border:none; cursor:pointer; width:100%; text-align:left; color:inherit;"
+      >
+        <span class="sidebar-icon">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </span>
         <span class="sidebar-label">Log Out</span>
       </button>
     </aside>
@@ -66,17 +114,29 @@
 
       <div class="topbar-row">
         <div class="topbar">
-          <div class="topbar-left">
-            <button class="topbar-home-btn" type="button">Home</button>
-          </div>
+          <div class="topbar-left"></div>
 
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="notifications.html" id="notificationBtn" style="position: relative; background: rgba(255,255,255,0.1); color: #fff; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Notifications">
-              <i class="fa-solid fa-bell" style="font-size: 1rem;"></i>
-              <span id="notifBadge" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 10px; border: 2px solid #111d17; min-width: 18px; text-align: center;">0</span>
+          <div style="display:flex; align-items:center; gap:15px;">
+            <a
+              href="notifications.html"
+              id="notificationBtn"
+              style="position:relative; background:rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none;"
+              title="Notifications"
+              aria-label="Notifications"
+            >
+              <i class="fa-solid fa-bell" style="font-size:1rem;"></i>
+              <span
+                id="notifBadge"
+                style="display:none; position:absolute; top:-2px; right:-2px; background:#ef4444; color:#ffffff; font-size:10px; font-weight:800; padding:2px 5px; border-radius:10px; border:2px solid #111d17; min-width:18px; text-align:center;"
+              >0</span>
             </a>
 
-            <a class="topbar-store" id="profileBtn" href="profile.html" style="text-decoration:none; color:inherit; display: flex; align-items: center; gap: 10px;">
+            <a
+              class="topbar-store"
+              id="profileBtn"
+              href="profile.html"
+              style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;"
+            >
               <span class="topbar-avatar" id="avatarContainer"></span>
               <span id="topbarStoreName">Loading...</span>
             </a>
@@ -84,33 +144,47 @@
         </div>
       </div>
 
-      <div class="home-search-bar" style="margin-bottom: 20px;">
+      <div class="home-search-bar" style="margin-bottom:20px;">
         <form id="searchForm" style="display:flex; width:100%; max-width:600px; margin:0 auto;">
-          <input type="text" id="searchInput" placeholder="Search products..." style="flex:1; padding:12px 18px; border-radius:20px; border:none; outline:none; font-size:0.95rem;">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search products..."
+            aria-label="Search products"
+            style="flex:1; padding:12px 18px; border-radius:20px; border:none; outline:none; font-size:0.95rem;"
+          >
         </form>
       </div>
 
-      <div class="category-pills" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:15px; margin-bottom:20px;">
-        <button class="category-pill active" data-category="All">All</button>
-        <button class="category-pill" data-category="Household">Household</button>
-        <button class="category-pill" data-category="Beverage">Beverage</button>
-        <button class="category-pill" data-category="Canned">Canned</button>
-        <button class="category-pill" data-category="Alcohol">Alcohol</button>
-        <button class="category-pill" data-category="Coffee & Tea">Coffee & Tea</button>
-        <button class="category-pill" data-category="Biscuits">Biscuits</button>
-        <button class="category-pill" data-category="Chips">Chips</button>
-        <button class="category-pill" data-category="Condiments">Condiments</button>
-        <button class="category-pill" data-category="Noodles">Noodles</button>
+      <div
+        class="category-pills"
+        style="display:flex; gap:10px; overflow-x:auto; padding-bottom:15px; margin-bottom:20px;"
+        aria-label="Product categories"
+      >
+        <button type="button" class="category-pill active" data-category="All" aria-pressed="true">All</button>
+        <button type="button" class="category-pill" data-category="Household" aria-pressed="false">Household</button>
+        <button type="button" class="category-pill" data-category="Beverage" aria-pressed="false">Beverage</button>
+        <button type="button" class="category-pill" data-category="Canned" aria-pressed="false">Canned</button>
+        <button type="button" class="category-pill" data-category="Alcohol" aria-pressed="false">Alcohol</button>
+        <button type="button" class="category-pill" data-category="Coffee &amp; Tea" aria-pressed="false">Coffee &amp; Tea</button>
+        <button type="button" class="category-pill" data-category="Biscuits" aria-pressed="false">Biscuits</button>
+        <button type="button" class="category-pill" data-category="Chips" aria-pressed="false">Chips</button>
+        <button type="button" class="category-pill" data-category="Condiments" aria-pressed="false">Condiments</button>
+        <button type="button" class="category-pill" data-category="Noodles" aria-pressed="false">Noodles</button>
       </div>
 
-      <div id="productGrid" class="pos-grid">
-        <p style="grid-column: 1 / -1; color: #fff; text-align: center; padding: 40px;">Naglo-load ng mga produkto...</p>
+      <div id="productGrid" class="pos-grid" aria-live="polite">
+        <p style="grid-column:1 / -1; color:#fff; text-align:center; padding:40px;">
+          Naglo-load ng mga produkto...
+        </p>
       </div>
 
     </main>
   </div>
 
-  <script src="js/script.js?v=11.0" type="module"></script>
-  <script type="module" src="js/homepage.js?v=11.0"></script>
+  <script src="js/script.js?v=13.0" type="module"></script>
+  <script type="module" src="js/homepage.js?v=13.0"></script>
+
 </body>
 </html>
+```

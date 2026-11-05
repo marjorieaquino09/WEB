@@ -6,6 +6,50 @@ import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.
 let currentUserId = null;
 let userEmail = "";
 
+/* ---------------------------------------------------------
+   THEME (same system as app.js: data-theme on <html> + "sari_theme")
+--------------------------------------------------------- */
+function applyTheme(themeName) {
+  const theme = themeName || "default";
+
+  if (theme !== "default") {
+    document.documentElement.setAttribute("data-theme", theme);
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+
+  localStorage.setItem("sari_theme", theme);
+
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.theme === theme);
+  });
+}
+
+// Apply saved theme immediately (before Firestore loads)
+applyTheme(localStorage.getItem("sari_theme") || "default");
+
+document.querySelectorAll(".theme-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const selectedTheme = btn.dataset.theme;
+    applyTheme(selectedTheme);
+
+    if (currentUserId) {
+      try {
+        const userRef = doc(db, "users", currentUserId);
+        await updateDoc(userRef, {
+          app_theme: selectedTheme,
+          updated_at: serverTimestamp()
+        });
+      } catch (err) {
+        console.error("Error saving theme to Firestore:", err);
+      }
+    }
+  });
+});
+
+/* ---------------------------------------------------------
+   AUTH + LOAD USER DATA
+--------------------------------------------------------- */
 checkAuth(async (user) => {
   currentUserId = user.uid;
   userEmail = user.email || "";
@@ -74,50 +118,9 @@ checkAuth(async (user) => {
   }
 });
 
-function applyTheme(themeName) {
-  document.body.classList.remove("theme-default", "theme-nordic", "theme-emerald");
-
-  if (themeName === "nordic") {
-    document.body.classList.add("theme-nordic");
-  } else if (themeName === "emerald") {
-    document.body.classList.add("theme-emerald");
-  } else {
-    document.body.classList.add("theme-default");
-  }
-
-  localStorage.setItem("sariAppTheme", themeName);
-
-  document.querySelectorAll(".theme-btn").forEach((btn) => {
-    if (btn.dataset.theme === themeName) {
-      btn.classList.add("active");
-    } else {
-      btn.classList.remove("active");
-    }
-  });
-}
-
-const savedLocalTheme = localStorage.getItem("sariAppTheme") || "default";
-applyTheme(savedLocalTheme);
-
-document.querySelectorAll(".theme-btn").forEach((btn) => {
-  btn.addEventListener("click", async () => {
-    const selectedTheme = btn.dataset.theme;
-    applyTheme(selectedTheme);
-
-    if (currentUserId) {
-      try {
-        const userRef = doc(db, "users", currentUserId);
-        await updateDoc(userRef, {
-          app_theme: selectedTheme,
-          updated_at: serverTimestamp()
-        });
-      } catch (err) {
-        console.error("Error saving theme to Firestore:", err);
-      }
-    }
-  });
-});
-
+/* ---------------------------------------------------------
+   LOW STOCK THRESHOLD FORM
+--------------------------------------------------------- */
 document.getElementById("settingsForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const btn = document.getElementById("saveThresholdBtn");
@@ -145,6 +148,9 @@ document.getElementById("settingsForm").addEventListener("submit", async (e) => 
   }
 });
 
+/* ---------------------------------------------------------
+   TOGGLES
+--------------------------------------------------------- */
 async function saveTogglePreference(key, value) {
   try {
     const userRef = doc(db, "users", currentUserId);
@@ -165,6 +171,9 @@ document.getElementById("lowStockAlertToggle").addEventListener("change", (e) =>
   saveTogglePreference("low_stock_alerts", e.target.checked);
 });
 
+/* ---------------------------------------------------------
+   ACCOUNT / ABOUT / LOGOUT
+--------------------------------------------------------- */
 document.getElementById("changePasswordBtn").addEventListener("click", async () => {
   if (userEmail) {
     try {

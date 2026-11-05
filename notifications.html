@@ -179,6 +179,31 @@
       font-weight: 700;
     }
 
+    #topbarAvatarContainer {
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
+      min-height: 32px !important;
+      border-radius: 50% !important;
+      background-color: #ffffff !important;
+      color: #1b382b !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 800 !important;
+      font-size: 0.9rem !important;
+      overflow: hidden !important;
+      position: relative !important;
+      flex-shrink: 0 !important;
+      line-height: 1 !important;
+    }
+
+    #topbarStoreName {
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      font-size: 0.95rem !important;
+    }
+
     @media (max-width: 768px) {
       .notif-page {
         padding: 10px;
@@ -199,8 +224,11 @@
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <a href="homepage.html" class="sidebar-logo">Sari</a>
-      </div>
+  <a href="homepage.html" class="sidebar-logo">
+    <img src="assets/sari-logo.jpg" alt="Sari Logo" class="sidebar-logo-img">
+    <span>Sari</span>
+  </a>
+</div>
 
       <nav class="sidebar-nav">
         <a href="homepage.html" class="sidebar-link">
@@ -290,322 +318,6 @@
   </div>
 
   <script src="js/script.js?v=14.0" type="module"></script>
-
-  <script type="module">
-    import { db, auth } from "./js/firebase-config.js";
-    import { collection, query, where, onSnapshot, doc, getDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-    const container = document.getElementById("notificationsContainer");
-    const summary = document.getElementById("notificationSummary");
-    const storeName = document.getElementById("topbarStoreName");
-    const avatar = document.getElementById("topbarAvatarContainer");
-
-    let products = [];
-    let transactions = [];
-    let credits = [];
-    let productsReady = false;
-    let transactionsReady = false;
-    let creditsReady = false;
-
-    function showLoading(message) {
-      if (!container) return;
-      container.innerHTML = `
-        <div class="notif-loading">
-          <i class="fa-solid fa-spinner fa-spin" style="font-size:22px; color:#9DC88D; margin-bottom:10px;"></i>
-          <br>${escapeHtml(message)}
-        </div>`;
-    }
-
-    function showError(message) {
-      if (!container) return;
-      container.innerHTML = `
-        <div class="notif-error">
-          <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; margin-bottom:10px;"></i>
-          <br>Failed to load notifications.
-          <div class="notif-debug">${escapeHtml(message)}</div>
-        </div>`;
-    }
-
-    showLoading("Checking Firebase connection...");
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
-      }
-
-      const userId = user.uid;
-
-      try {
-        const savedStoreName = localStorage.getItem("customStoreName");
-        const savedImage = localStorage.getItem("userProfileImage");
-
-        if (storeName) storeName.innerText = savedStoreName || "My Store";
-
-        if (avatar) {
-          if (savedImage) {
-            avatar.innerHTML = `<img src="${escapeHtml(savedImage)}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="Avatar">`;
-          } else {
-            avatar.innerText = (savedStoreName || "S").charAt(0).toUpperCase();
-          }
-        }
-
-        const userRef = doc(db, "users", userId);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          const displayName = savedStoreName || userData.store_name || userData.full_name || "My Store";
-
-          if (storeName) storeName.innerText = displayName;
-
-          if (avatar && !savedImage) {
-            if (userData.profile_image) {
-              avatar.innerHTML = `<img src="${escapeHtml(userData.profile_image)}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="Avatar">`;
-            } else {
-              avatar.innerText = displayName.charAt(0).toUpperCase();
-            }
-          }
-        }
-      } catch (error) {
-        console.error("USER PROFILE ERROR:", error);
-      }
-
-      loadProducts(userId);
-      loadTransactions(userId);
-      loadCredits(userId);
-      loadDirectNotifications(userId);
-    });
-
-    function loadDirectNotifications(userId) {
-      const notifsQuery = query(collection(db, "notifications"), where("userId", "==", userId));
-
-      onSnapshot(notifsQuery, async (snapshot) => {
-        const unreadIds = [];
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          if (!data.isRead) unreadIds.push(docSnap.id);
-        });
-
-        if (unreadIds.length > 0) {
-          try {
-            const batch = writeBatch(db);
-            unreadIds.forEach((id) => {
-              batch.update(doc(db, "notifications", id), { isRead: true });
-            });
-            await batch.commit();
-          } catch (err) {
-            console.error("Error updating unread notifications:", err);
-          }
-        }
-      });
-    }
-
-    function loadProducts(userId) {
-      const q = query(collection(db, "products"), where("userId", "==", userId));
-      onSnapshot(q, (snapshot) => {
-        products = [];
-        snapshot.forEach((item) => products.push({ id: item.id, ...item.data() }));
-        productsReady = true;
-        renderNotifications();
-      }, (error) => {
-        productsReady = true;
-        showError("Products: " + error.message);
-      });
-    }
-
-    function loadTransactions(userId) {
-      const q = query(collection(db, "transactions"), where("userId", "==", userId));
-      onSnapshot(q, (snapshot) => {
-        transactions = [];
-        snapshot.forEach((item) => transactions.push({ id: item.id, ...item.data() }));
-        transactionsReady = true;
-        renderNotifications();
-      }, (error) => {
-        transactionsReady = true;
-        renderNotifications();
-      });
-    }
-
-    function loadCredits(userId) {
-      const q = query(collection(db, "credits"), where("userId", "==", userId));
-      onSnapshot(q, (snapshot) => {
-        credits = [];
-        snapshot.forEach((item) => credits.push({ id: item.id, ...item.data() }));
-        creditsReady = true;
-        renderNotifications();
-      }, (error) => {
-        creditsReady = true;
-        renderNotifications();
-      });
-    }
-
-    function renderNotifications() {
-      if (!productsReady && !transactionsReady && !creditsReady) return;
-
-      const notifications = [];
-
-      products.forEach((product) => {
-        const stock = Number(product.stock ?? 0);
-        if (stock === 0) {
-          notifications.push({
-            type: "inventory",
-            title: "Out of Stock",
-            message: `"${product.name || "Product"}" is out of stock.`,
-            icon: "fa-circle-xmark",
-            color: "#ef4444",
-            time: getTime(product.updatedAt || product.updated_at || product.createdAt || product.created_at)
-          });
-        } else if (stock <= 5) {
-          notifications.push({
-            type: "inventory",
-            title: "Low Stock",
-            message: `"${product.name || "Product"}" has only ${stock} left.`,
-            icon: "fa-triangle-exclamation",
-            color: "#f59e0b",
-            time: getTime(product.updatedAt || product.updated_at || product.createdAt || product.created_at)
-          });
-        }
-      });
-
-      transactions
-        .sort((a, b) => getTime(b.createdAt || b.created_at || b.timestamp) - getTime(a.createdAt || a.created_at || a.timestamp))
-        .slice(0, 20)
-        .forEach((transaction) => {
-          const amount = Number(transaction.totalAmount ?? transaction.total_amount ?? transaction.amount ?? 0);
-          const customer = transaction.customerName || transaction.customer_name || "Walk-in Customer";
-          const method = transaction.paymentMethod || transaction.payment_method || "Cash";
-          const time = getTime(transaction.createdAt || transaction.created_at || transaction.timestamp);
-
-          notifications.push({
-            type: "transaction",
-            title: "New Transaction",
-            message: `${customer} — ${method} — ₱${amount.toFixed(2)}`,
-            icon: "fa-receipt",
-            color: "#60a5fa",
-            time: time
-          });
-        });
-
-      credits.forEach((credit) => {
-        const amount = Number(credit.amount ?? credit.totalAmount ?? credit.total_amount ?? 0);
-        const customer = credit.customerName || credit.customer_name || "Customer";
-        const time = getTime(credit.updatedAt || credit.updated_at || credit.createdAt || credit.created_at || credit.date);
-
-        if (credit.isPaid === true) {
-          notifications.push({
-            type: "credit",
-            title: "Credit Paid",
-            message: `${customer} paid ₱${amount.toFixed(2)}.`,
-            icon: "fa-circle-check",
-            color: "#22c55e",
-            time: time
-          });
-        } else {
-          notifications.push({
-            type: "credit",
-            title: "Unpaid Credit",
-            message: `${customer} owes ₱${amount.toFixed(2)}.`,
-            icon: "fa-money-bill-transfer",
-            color: "#f97316",
-            time: time
-          });
-        }
-      });
-
-      notifications.sort((a, b) => Number(b.time || 0) - Number(a.time || 0));
-
-      const inventoryCount = notifications.filter(item => item.type === "inventory").length;
-      const transactionCount = notifications.filter(item => item.type === "transaction").length;
-      const creditCount = notifications.filter(item => item.type === "credit").length;
-
-      if (summary) {
-        summary.innerHTML = `
-          ${inventoryCount > 0 ? `<span class="notif-summary-item notif-summary-inventory">Inventory ${inventoryCount}</span>` : ""}
-          ${transactionCount > 0 ? `<span class="notif-summary-item notif-summary-transactions">Transactions ${transactionCount}</span>` : ""}
-          ${creditCount > 0 ? `<span class="notif-summary-item notif-summary-credit">Credit ${creditCount}</span>` : ""}
-        `;
-      }
-
-      if (!notifications.length) {
-        if (container) {
-          container.innerHTML = `
-            <div class="notif-empty">
-              <i class="fa-solid fa-bell-slash" style="font-size:28px; color:#9DC88D; margin-bottom:10px;"></i>
-              <br>No notifications yet.<br>
-              <span style="font-size:0.7rem; color:#94a3b8;">Your inventory, transactions, and credits will appear here.</span>
-            </div>`;
-        }
-        return;
-      }
-
-      if (!container) return;
-
-      container.innerHTML = `
-        <div class="notif-section-title">
-          <strong>Recent Notifications</strong>
-          <span class="notif-count">${notifications.length}</span>
-        </div>
-        ${notifications.map((item) => `
-          <div class="notif-item">
-            <div class="notif-item-icon" style="color:${item.color}; background:${item.color}20;">
-              <i class="fa-solid ${item.icon}"></i>
-            </div>
-            <div class="notif-item-content">
-              <h4>${escapeHtml(item.title)}</h4>
-              <p>${escapeHtml(item.message)}</p>
-            </div>
-            <div class="notif-item-time">
-              ${item.time ? formatTime(item.time) : ""}
-            </div>
-          </div>
-        `).join("")}`;
-    }
-
-    function getTime(value) {
-      if (!value) return 0;
-      if (typeof value.toMillis === "function") return value.toMillis();
-      if (typeof value.toDate === "function") return value.toDate().getTime();
-      if (value instanceof Date) return value.getTime();
-      if (typeof value === "number") return value;
-      if (typeof value === "string") {
-        const parsed = new Date(value).getTime();
-        return Number.isNaN(parsed) ? 0 : parsed;
-      }
-      if (typeof value === "object" && value.seconds !== undefined) {
-        return Number(value.seconds) * 1000;
-      }
-      return 0;
-    }
-
-    function formatTime(timestamp) {
-      const date = new Date(timestamp);
-      if (Number.isNaN(date.getTime())) return "";
-      return date.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-    }
-
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    const logoutBtn = document.getElementById("logoutBtn");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        try {
-          await signOut(auth);
-          window.location.href = "index.html";
-        } catch (error) {
-          console.error("Logout error:", error);
-        }
-      });
-    }
-  </script>
+  <script src="js/notification.js?v=2" type="module"></script>
 </body>
 </html>

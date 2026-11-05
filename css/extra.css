@@ -221,3 +221,18 @@
 .dashboard-mini-table tbody td {
   padding: 10px 8px;
 }
+.sidebar-link,
+.sidebar-link.active,
+.sidebar-link:hover,
+.sidebar-link:focus,
+.sidebar-link:focus-visible {
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border-color: transparent !important;
+}
+
+.sidebar-link.active::before,
+.sidebar-link.active::after {
+    display: none !important;
+}

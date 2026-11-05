@@ -4,22 +4,57 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SARI - Dashboard</title>
-  <link rel="stylesheet" href="css/dashboard.css?v=14.0">
-  <link rel="stylesheet" href="css/inventory.css?v=14.0">
-  <link rel="stylesheet" href="css/extra.css?v=14.0">
+
+  <link rel="stylesheet" href="css/dashboard.css?v=18.0">
+  <link rel="stylesheet" href="css/inventory.css?v=18.0">
+  <link rel="stylesheet" href="css/extra.css?v=18.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/style.css?v=18.0">
 
   <style>
     @keyframes fadeSlideUp {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .stat-card, .panel {
+    .stat-card,
+    .panel {
       animation: fadeSlideUp 0.5s ease-out forwards;
+    }
+
+    /* WHITE CARDS STYLING FOR CHARTS & PANELS */
+    .panel {
+      background: #ffffff !important;
+      border-radius: 18px !important;
+      padding: 20px !important;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12) !important;
+      color: #102a24 !important;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #102a24 !important;
+    }
+
+    .panel-link {
+      font-size: 13px;
+      font-weight: 700;
+      color: #164a41 !important;
     }
 
     .chart-box-wrapper {
@@ -27,9 +62,115 @@
       width: 100%;
       height: 260px;
     }
+
+    .transaction-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .transaction-row:last-child {
+      border-bottom: none;
+    }
+
+    .transaction-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .transaction-icon {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .transaction-meta {
+      font-size: 14px;
+      font-weight: 700;
+      color: #102a24;
+    }
+
+    .transaction-amount {
+      font-size: 14px;
+      font-weight: 800;
+      color: #102a24;
+    }
+
+    /* SIDEBAR ACTIVE SELECTOR */
+    .sidebar-nav li.active,
+    .sidebar-nav li.active a,
+    .sidebar-nav .sidebar-link.active,
+    .sidebar-link.active,
+    a.sidebar-link[aria-current="page"] {
+      background: rgba(255, 255, 255, 0.18) !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      border-radius: 12px !important;
+    }
+
+    .sidebar-nav li.active .sidebar-icon,
+    .sidebar-link.active .sidebar-icon {
+      background-color: #9dc88d !important;
+      color: #4d774e !important;
+    }
+
+    /* =========================================================
+       TABLE LAYOUT & ALIGNMENT FIX FOR DASHBOARD
+       ========================================================= */
+    .dashboard-mini-table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      margin-top: 10px !important;
+    }
+
+    .dashboard-mini-table th,
+    .dashboard-mini-table td {
+      padding: 12px 8px !important;
+      vertical-align: middle !important;
+      font-size: 14px !important;
+    }
+
+    /* PRODUCT NAME: Left Aligned */
+    .dashboard-mini-table th:nth-child(1),
+    .dashboard-mini-table td:nth-child(1) {
+      text-align: left !important;
+      width: 50% !important;
+      font-weight: 700;
+    }
+
+    /* UNITS SOLD: Center Aligned */
+    .dashboard-mini-table th:nth-child(2),
+    .dashboard-mini-table td:nth-child(2) {
+      text-align: center !important;
+      width: 25% !important;
+    }
+
+    /* REVENUE: Right Aligned */
+    .dashboard-mini-table th:nth-child(3),
+    .dashboard-mini-table td:nth-child(3) {
+      text-align: right !important;
+      width: 25% !important;
+      font-weight: 800;
+      color: #102a24;
+    }
+
+    .dashboard-mini-table thead tr {
+      border-bottom: 2px solid #e2e8f0 !important;
+      color: #64748b !important;
+    }
+
+    .dashboard-mini-table tbody tr {
+      border-bottom: 1px solid #f1f5f9 !important;
+    }
+
+    .dashboard-mini-table tbody tr:last-child {
+      border-bottom: none !important;
+    }
   </style>
-  
-  <link rel="stylesheet" href="css/style.css?v=14.0">
 </head>
 <body class="app-page">
 
@@ -37,7 +178,10 @@
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <a href="homepage.html" class="sidebar-logo">Sari</a>
+        <a href="homepage.html" class="sidebar-logo">
+          <img src="assets/sari-logo.jpg" alt="Sari Logo" class="sidebar-logo-img">
+          <span>Sari</span>
+        </a>
       </div>
 
       <nav class="sidebar-nav">
@@ -45,39 +189,46 @@
           <span class="sidebar-icon"><i class="fa-solid fa-house"></i></span>
           <span class="sidebar-label">Home</span>
         </a>
+
         <a href="inventory.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-box"></i></span>
           <span class="sidebar-label">Inventory</span>
         </a>
+
         <a href="checkout.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-cash-register"></i></span>
           <span class="sidebar-label">Checkout</span>
         </a>
-        <a href="dashboard.html" class="sidebar-link active">
+
+        <a href="dashboard.html" class="sidebar-link" aria-current="page">
           <span class="sidebar-icon"><i class="fa-solid fa-chart-pie"></i></span>
           <span class="sidebar-label">Dashboard</span>
         </a>
+
         <a href="credit-ledger.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-money-check-dollar"></i></span>
           <span class="sidebar-label">Credit Ledger</span>
         </a>
+
         <a href="transactions.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-receipt"></i></span>
           <span class="sidebar-label">Transactions</span>
         </a>
-        <a href="settings.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-gear"></i></span>
-          <span class="sidebar-label">Settings</span>
-        </a>
+
         <a href="profile.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-user"></i></span>
-          <span class="sidebar-label">My Profile</span>
+          <span class="sidebar-label">Profile &amp; Settings</span>
         </a>
       </nav>
 
       <div class="sidebar-spacer"></div>
 
-      <button id="logoutBtn" class="sidebar-logout" style="background:none; border:none; cursor:pointer; width:100%; text-align:left; color:inherit;">
+      <button
+        id="logoutBtn"
+        class="sidebar-logout"
+        type="button"
+        style="background:none; border:none; cursor:pointer; width:100%; text-align:left; color:inherit;"
+      >
         <span class="sidebar-icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
         <span class="sidebar-label">Log Out</span>
       </button>
@@ -87,17 +238,29 @@
 
       <div class="topbar-row">
         <div class="topbar">
-          <div class="topbar-left">
-            <button class="topbar-home-btn" type="button">Dashboard</button>
-          </div>
+          <div class="topbar-left"></div>
 
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="notifications.html" id="notificationBtn" style="position: relative; background: rgba(255,255,255,0.1); color: #fff; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Notifications">
-              <i class="fa-solid fa-bell" style="font-size: 1rem;"></i>
-              <span id="notifBadge" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 10px; border: 2px solid #111d17; min-width: 18px; text-align: center;">0</span>
+          <div style="display:flex; align-items:center; gap:15px;">
+            <a
+              href="notifications.html"
+              id="notificationBtn"
+              style="position:relative; background:rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none;"
+              title="Notifications"
+              aria-label="Notifications"
+            >
+              <i class="fa-solid fa-bell" style="font-size:1rem;"></i>
+              <span
+                id="notifBadge"
+                style="display:none; position:absolute; top:-2px; right:-2px; background:#ef4444; color:#ffffff; font-size:10px; font-weight:800; padding:2px 5px; border-radius:10px; border:2px solid #111d17; min-width:18px; text-align:center;"
+              >0</span>
             </a>
 
-            <a class="topbar-store" id="profileBtn" href="profile.html" style="text-decoration:none; color:inherit; display: flex; align-items: center; gap: 10px;">
+            <a
+              class="topbar-store"
+              id="profileBtn"
+              href="profile.html"
+              style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;"
+            >
               <span class="topbar-avatar" id="avatarContainer"></span>
               <span id="topbarStoreName">Loading...</span>
             </a>
@@ -105,23 +268,25 @@
         </div>
       </div>
 
-     
       <section class="stat-cards">
         <div class="stat-card">
           <div class="stat-label">TOTAL REVENUE (30D)</div>
           <div class="stat-value" id="statTotalRevenue">₱0.00</div>
           <div class="stat-delta neutral" id="statTotalTxns">0 total transactions</div>
         </div>
+
         <div class="stat-card">
           <div class="stat-label">TOTAL PROFIT (30D)</div>
           <div class="stat-value" id="statTotalProfit">₱0.00</div>
           <div class="stat-delta neutral">Estimated (20%)</div>
         </div>
+
         <div class="stat-card">
           <div class="stat-label">PROFIT MARGIN</div>
           <div class="stat-value" id="statProfitMargin">0%</div>
           <div class="stat-delta neutral">Standard estimate</div>
         </div>
+
         <div class="stat-card">
           <div class="stat-label">AVG. SALE VALUE</div>
           <div class="stat-value" id="statAvgSale">₱0.00</div>
@@ -129,10 +294,9 @@
         </div>
       </section>
 
-      
       <section class="dashboard-row">
-        
-        <div class="panel panel-tinted chart-panel">
+
+        <div class="panel chart-panel">
           <div class="panel-header">
             <span class="panel-title">Revenue &amp; Profit Trend (2026)</span>
           </div>
@@ -141,8 +305,7 @@
           </div>
         </div>
 
-      
-        <div class="panel panel-tinted">
+        <div class="panel">
           <div class="panel-header">
             <span class="panel-title">Sales by Category</span>
           </div>
@@ -150,15 +313,17 @@
             <canvas id="categoryChartCanvas"></canvas>
           </div>
         </div>
+
       </section>
 
-      
       <section class="dashboard-row low-stock-row">
+
         <div class="panel">
           <div class="panel-header">
             <span class="panel-title">Top Products This Month</span>
             <a href="inventory.html" class="panel-link" style="text-decoration:none;">View All</a>
           </div>
+
           <table class="inventory-table dashboard-mini-table">
             <thead>
               <tr>
@@ -169,37 +334,42 @@
             </thead>
             <tbody id="topProductsTableBody">
               <tr>
-                <td colspan="3" style="text-align: center; color: #9aa9a0; padding: 30px;">No sales recorded yet.</td>
+                <td colspan="3" style="text-align:center; color:#94a3b8; padding:30px;">
+                  No sales recorded yet.
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="panel panel-transparent">
+        <div class="panel">
           <div class="panel-header">
             <span class="panel-title">Payment Method Mix</span>
           </div>
+
           <div class="transaction-row">
             <div class="transaction-left">
-              <span class="transaction-icon" style="background:#4ade80;"></span>
+              <span class="transaction-icon" style="background:#16a34a;"></span>
               <span class="transaction-meta">Cash</span>
             </div>
             <span class="transaction-amount" id="cashPctText">0.0%</span>
           </div>
+
           <div class="transaction-row">
             <div class="transaction-left">
-              <span class="transaction-icon" style="background:#fde047;"></span>
+              <span class="transaction-icon" style="background:#eab308;"></span>
               <span class="transaction-meta">Credit</span>
             </div>
             <span class="transaction-amount" id="creditPctText">0.0%</span>
           </div>
         </div>
+
       </section>
 
     </main>
   </div>
 
-  <script src="js/script.js?v=14.0" type="module"></script>
-  <script type="module" src="js/dashboard.js?v=14.0"></script>
+  <script src="js/script.js?v=18.0" type="module"></script>
+  <script type="module" src="js/dashboard.js?v=18.0"></script>
 </body>
 </html>

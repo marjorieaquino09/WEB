@@ -3,72 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SARI - Profile</title>
-  <link rel="stylesheet" href="css/style.css?v=12.0">
-  <link rel="stylesheet" href="css/extra.css?v=12.0">
+  <title>SARI - Profile &amp; Settings</title>
+  <link rel="stylesheet" href="css/style.css?v=13.0">
+  <link rel="stylesheet" href="css/extra.css?v=13.0">
+  <link rel="stylesheet" href="css/profile.css?v=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
-    /* Topbar Link at Store Name Styling */
-    .topbar-store {
-      text-decoration: none;
-      color: #ffffff !important; /* Puti para litaw sa dark background */
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+.sidebar-nav li.active,
+.sidebar-nav li.active a,
+.sidebar-nav .sidebar-link.active,
+.sidebar-link.active,
+a.sidebar-link[aria-current="page"] {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+}
 
-    #topbarStoreName {
-      color: #ffffff !important;
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
-
-    /* Topbar Avatar Circle Container */
-    .topbar-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background-color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #1b382b;
-      font-size: 0.95rem;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-
-    /* Main Center Avatar Box */
-    .avatar-upload-box {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      background: #4d774e;
-      border: 3px solid #9dc88d;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      color: #ffffff;
-      cursor: pointer;
-      overflow: hidden;
-      position: relative;
-      margin: 0 auto;
-      transition: opacity 0.2s ease;
-    }
-    
-    .avatar-upload-box:hover {
-      opacity: 0.85;
-    }
+.sidebar-nav li.active .sidebar-icon,
+.sidebar-link.active .sidebar-icon {
+    background-color: #9dc88d !important;
+    color: #4d774e !important;
+}
   </style>
 </head>
-<body class="app-page">
+<body class="app-page profile-page">
 
   <div class="app-shell">
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <a href="homepage.html" class="sidebar-logo">Sari</a>
+        <a href="homepage.html" class="sidebar-logo">
+          <img src="assets/sari-logo.jpg" alt="Sari Logo" class="sidebar-logo-img">
+          <span>Sari</span>
+        </a>
       </div>
 
       <nav class="sidebar-nav">
@@ -76,33 +45,35 @@
           <span class="sidebar-icon"><i class="fa-solid fa-house"></i></span>
           <span class="sidebar-label">Home</span>
         </a>
+
         <a href="inventory.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-box"></i></span>
           <span class="sidebar-label">Inventory</span>
         </a>
+
         <a href="checkout.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-cash-register"></i></span>
           <span class="sidebar-label">Checkout</span>
         </a>
+
         <a href="dashboard.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-chart-pie"></i></span>
           <span class="sidebar-label">Dashboard</span>
         </a>
+
         <a href="credit-ledger.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-money-check-dollar"></i></span>
           <span class="sidebar-label">Credit Ledger</span>
         </a>
+
         <a href="transactions.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-receipt"></i></span>
           <span class="sidebar-label">Transactions</span>
         </a>
-        <a href="settings.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-gear"></i></span>
-          <span class="sidebar-label">Settings</span>
-        </a>
-        <a href="profile.html" class="sidebar-link active">
+
+        <a href="profile.html" class="sidebar-link" aria-current="page">
           <span class="sidebar-icon"><i class="fa-solid fa-user"></i></span>
-          <span class="sidebar-label">My Profile</span>
+          <span class="sidebar-label">Profile &amp; Settings</span>
         </a>
       </nav>
 
@@ -116,56 +87,212 @@
 
     <main class="main-content">
 
-      <div class="topbar-row">
-        <div class="topbar">
-          <div class="topbar-left">
-            <button class="topbar-home-btn" type="button" onclick="window.location.href='profile.html'">Store Profile</button>
-          </div>
-          <a class="topbar-store" id="profileBtn" href="profile.html">
-            <span class="topbar-avatar" id="avatarContainer">
-              <i class="fa-solid fa-user"></i>
-            </span>
-            <span id="topbarStoreName">Loading...</span>
-          </a>
-        </div>
+      <div class="pf-cover" id="coverBox">
+        <input type="file" id="coverImageFile" accept="image/*" hidden>
+        <button type="button" class="pf-cover-btn" id="changeCoverBtn">
+          <i class="fa-solid fa-camera"></i> Change Cover
+        </button>
       </div>
 
-      <div class="inv-form-card" style="max-width: 600px; margin: 20px auto; background: #1b382b; color: #ffffff; border-radius: 20px; padding: 30px;">
-        <h2 style="text-align: center; margin-bottom: 20px; font-weight: 800;">Store Profile & Details</h2>
+      <div class="pf-grid">
 
-        <p style="text-align: center; font-size: 0.85rem; color: #a3b899; margin-bottom: 15px;">Profile Picture (Click to Change)</p>
-        
-        <div style="display: flex; justify-content: center; margin-bottom: 25px;">
-          <input type="file" id="profileImageFile" accept="image/*" style="display: none;">
-          <div class="avatar-upload-box" id="avatarBox">
-            <i class="fa-solid fa-user"></i>
+        <aside class="pf-side">
+          <div class="pf-side-card">
+            <div class="pf-side-head">
+              <div class="pf-avatar">
+                <input type="file" id="profileImageFile" accept="image/*" hidden>
+                <div class="pf-avatar-box" id="avatarBox"><i class="fa-solid fa-user"></i></div>
+                <button type="button" class="pf-avatar-badge" id="avatarBtn" aria-label="Change profile picture">
+                  <i class="fa-solid fa-camera"></i>
+                </button>
+              </div>
+              <h2 class="pf-side-name" id="sideName">Owner name</h2>
+              <p class="pf-side-store" id="sideStore">Your store name</p>
+            </div>
+
+            <ul class="pf-stats">
+              <li><span>Products in inventory</span><strong class="pf-stat-orange" id="statProducts">0</strong></li>
+              <li><span>Sales today</span><strong class="pf-stat-green" id="statSales">₱0.00</strong></li>
+              <li><span>Open credit (utang)</span><strong class="pf-stat-blue" id="statCredit">₱0.00</strong></li>
+            </ul>
+
+            <nav class="pf-nav" id="pfNav">
+              <a href="#sec-account" class="active" data-target="sec-account">Account</a>
+              <a href="#sec-store" data-target="sec-store">Store</a>
+              <a href="#sec-preferences" data-target="sec-preferences">Preferences</a>
+              <a href="#sec-notifications" data-target="sec-notifications">Notifications</a>
+              <a href="#sec-security" data-target="sec-security">Security</a>
+            </nav>
+
+            <a href="dashboard.html" class="pf-dash-btn">View Dashboard</a>
           </div>
+        </aside>
+
+        <div class="pf-content">
+
+          <section class="pf-card" id="sec-account">
+            <header class="pf-card-head">
+              <h3>Account</h3>
+              <p>Your personal details.</p>
+            </header>
+            <form class="pf-card-body" id="accountForm">
+              <div class="pf-row-2">
+                <div class="pf-field">
+                  <label for="inputFullName">Owner name</label>
+                  <input type="text" id="inputFullName" placeholder="e.g. Nena Santos" autocomplete="name">
+                </div>
+                <div class="pf-field">
+                  <label for="inputPhone">Phone number</label>
+                  <input type="tel" id="inputPhone" placeholder="e.g. 0917 123 4567" autocomplete="tel">
+                </div>
+              </div>
+              <div class="pf-field">
+                <label for="valEmail">Email address</label>
+                <div class="pf-input-lock">
+                  <input type="email" id="valEmail" disabled>
+                  <i class="fa-solid fa-lock"></i>
+                </div>
+                <small>This is your login email, so it can't be changed here.</small>
+              </div>
+              <div class="pf-actions">
+                <button type="submit" class="pf-btn" id="saveAccountBtn">Save changes</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="pf-card" id="sec-store">
+            <header class="pf-card-head">
+              <h3>Store</h3>
+              <p>How your store shows up in Sari.</p>
+            </header>
+            <form class="pf-card-body" id="storeForm">
+              <div class="pf-field">
+                <label for="inputStoreName">Store name</label>
+                <input type="text" id="inputStoreName" placeholder="e.g. Aling Nena’s Store">
+              </div>
+              <div class="pf-field">
+                <label for="inputStoreAddress">Store address</label>
+                <input type="text" id="inputStoreAddress" placeholder="Street, barangay" autocomplete="street-address">
+              </div>
+              <div class="pf-actions">
+                <button type="submit" class="pf-btn" id="saveStoreBtn">Save changes</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="pf-card" id="sec-preferences">
+            <header class="pf-card-head">
+              <h3>Preferences</h3>
+              <p>Colors and how Sari handles your sales.</p>
+            </header>
+            <div class="pf-card-body">
+              <div class="pf-field">
+                <label>App color theme</label>
+                <small class="pf-hint-top">Pumili ng kulay na komportable at hindi masakit sa mata.</small>
+                <div class="pf-themes">
+                  <button class="pf-theme active" data-theme="default" type="button">
+                    <span class="pf-swatch" style="background:#1f8a52"></span>Default Green
+                  </button>
+                  <button class="pf-theme" data-theme="nordic" type="button">
+                    <span class="pf-swatch" style="background:#3b5b8c"></span>Nordic
+                  </button>
+                  <button class="pf-theme" data-theme="emerald" type="button">
+                    <span class="pf-swatch" style="background:#c9a227"></span>Emerald Gold
+                  </button>
+                </div>
+              </div>
+
+              <div class="pf-line">
+                <div>
+                  <h4>Currency</h4>
+                  <p>Used across all transactions</p>
+                </div>
+                <span class="pf-value">₱ PHP</span>
+              </div>
+
+              <form class="pf-line" id="taxForm">
+                <div>
+                  <h4>Tax rate (VAT)</h4>
+                  <p>Applied to every sale (set 0 kung walang VAT)</p>
+                </div>
+                <div class="pf-inline">
+                  <input type="number" id="tax_rate" class="pf-num" value="12" min="0" max="100" step="0.01">
+                  <span class="pf-value">%</span>
+                  <button type="submit" class="pf-btn pf-btn-sm" id="saveTaxBtn">Save</button>
+                </div>
+              </form>
+
+              <form class="pf-line" id="settingsForm">
+                <div>
+                  <h4>Low stock threshold</h4>
+                  <p>Get alerted below this quantity</p>
+                </div>
+                <div class="pf-inline">
+                  <input type="number" id="low_stock_threshold" class="pf-num" value="5" min="1">
+                  <button type="submit" class="pf-btn pf-btn-sm" id="saveThresholdBtn">Save</button>
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section class="pf-card" id="sec-notifications">
+            <header class="pf-card-head">
+              <h3>Notifications</h3>
+              <p>Choose which alerts you get.</p>
+            </header>
+            <div class="pf-card-body">
+              <div class="pf-line">
+                <div>
+                  <h4>Push notifications</h4>
+                  <p>Get real-time alerts on this device</p>
+                </div>
+                <label class="pf-switch">
+                  <input type="checkbox" id="pushNotifToggle" checked>
+                  <span class="pf-slider"></span>
+                </label>
+              </div>
+              <div class="pf-line">
+                <div>
+                  <h4>Low stock alerts</h4>
+                  <p>Notify when items run low</p>
+                </div>
+                <label class="pf-switch">
+                  <input type="checkbox" id="lowStockAlertToggle" checked>
+                  <span class="pf-slider"></span>
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <section class="pf-card" id="sec-security">
+            <header class="pf-card-head">
+              <h3>Security</h3>
+              <p>Keep your account safe.</p>
+            </header>
+            <div class="pf-card-body">
+              <div class="pf-line">
+                <div>
+                  <h4>Change password</h4>
+                  <p>Send a password reset link to your email</p>
+                </div>
+                <button type="button" class="pf-btn pf-btn-outline" id="changePasswordBtn">Send link</button>
+              </div>
+              <div class="pf-line pf-line-click" id="aboutBtn" role="button" tabindex="0">
+                <div>
+                  <h4>Help &amp; support</h4>
+                  <p>FAQs, contact us, terms of service</p>
+                </div>
+                <i class="fa-solid fa-chevron-right pf-chevron"></i>
+              </div>
+            </div>
+          </section>
+
         </div>
-
-        <form id="profileForm">
-          <div class="inv-form-group" style="margin-bottom: 15px;">
-            <label class="inv-form-label" style="color: #ffffff; font-weight: 700; margin-bottom: 5px; display: block;">Owner Name</label>
-            <input type="text" id="inputFullName" class="inv-form-input" placeholder="Owner Name" style="width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: 600;">
-          </div>
-
-          <div class="inv-form-group" style="margin-bottom: 15px;">
-            <label class="inv-form-label" style="color: #ffffff; font-weight: 700; margin-bottom: 5px; display: block;">Store Name</label>
-            <input type="text" id="inputStoreName" class="inv-form-input" placeholder="Store Name" style="width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: 600;">
-          </div>
-
-          <div class="inv-form-group" style="margin-bottom: 25px;">
-            <label class="inv-form-label" style="color: #ffffff; font-weight: 700; margin-bottom: 5px; display: block;">Email Address</label>
-            <input type="email" id="valEmail" class="inv-form-input" placeholder="Email Address" disabled style="width: 100%; padding: 12px; border-radius: 10px; border: none; background: #e2e8f0; color: #475569; font-weight: 600;">
-          </div>
-
-          <button type="submit" id="saveProfileBtn" class="inv-submit-btn" style="width: 100%; background: #9dc88d; color: #14301f; border: none; padding: 14px; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer;">
-            <i class="fa-solid fa-floppy-disk"></i> Save Changes
-          </button>
-        </form>
       </div>
-
     </main>
   </div>
+
+  <div class="pf-toast" id="pfToast" role="status" aria-live="polite"></div>
 
   <script type="module" src="js/profile.js"></script>
 </body>

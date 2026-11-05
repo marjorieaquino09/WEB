@@ -567,6 +567,19 @@ body.app-page {
   height: auto;
   padding: 24px 12px;
 }
+/* Empty state sa loob ng chart: sakop ang buong chart box */
+.chart-box-wrapper .dash-empty {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  padding: 0;
+}
+
+/* Para gumana ang hidden kahit may display:flex */
+.dash-empty[hidden],
+canvas[hidden] {
+  display: none !important;
+}
 
 .dash-empty-icon {
   width: 44px;

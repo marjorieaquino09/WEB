@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +10,27 @@
   <link rel="stylesheet" href="css/extra.css?v=12.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css?v=12.0">
+
+  <style>
+    /* ALL-PAGE UNIFORM SIDEBAR ACTIVE SELECTOR */
+.sidebar-nav li.active,
+.sidebar-nav li.active a,
+.sidebar-nav .sidebar-link.active,
+.sidebar-link.active,
+a.sidebar-link[aria-current="page"] {
+    background: rgba(255, 255, 255, 0.18) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+}
+
+/* ACTIVE ICON STYLING */
+.sidebar-nav li.active .sidebar-icon,
+.sidebar-link.active .sidebar-icon {
+    background-color: #9dc88d !important;
+    color: #4d774e !important;
+}
+  </style>
 </head>
 <body class="app-page">
 
@@ -16,7 +38,10 @@
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <a href="homepage.html" class="sidebar-logo">Sari</a>
+        <a href="homepage.html" class="sidebar-logo">
+          <img src="assets/sari-logo.jpg" alt="Sari Logo" class="sidebar-logo-img">
+          <span>Sari</span>
+        </a>
       </div>
 
       <nav class="sidebar-nav">
@@ -24,33 +49,35 @@
           <span class="sidebar-icon"><i class="fa-solid fa-house"></i></span>
           <span class="sidebar-label">Home</span>
         </a>
+
         <a href="inventory.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-box"></i></span>
           <span class="sidebar-label">Inventory</span>
         </a>
+
         <a href="checkout.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-cash-register"></i></span>
           <span class="sidebar-label">Checkout</span>
         </a>
+
         <a href="dashboard.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-chart-pie"></i></span>
           <span class="sidebar-label">Dashboard</span>
         </a>
+
         <a href="credit-ledger.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-money-check-dollar"></i></span>
           <span class="sidebar-label">Credit Ledger</span>
         </a>
-        <a href="transactions.html" class="sidebar-link active">
+
+        <a href="transactions.html" class="sidebar-link" aria-current="page">
           <span class="sidebar-icon"><i class="fa-solid fa-receipt"></i></span>
           <span class="sidebar-label">Transactions</span>
         </a>
-        <a href="settings.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-gear"></i></span>
-          <span class="sidebar-label">Settings</span>
-        </a>
+
         <a href="profile.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-user"></i></span>
-          <span class="sidebar-label">My Profile</span>
+          <span class="sidebar-label">Profile &amp; Settings</span>
         </a>
       </nav>
 
@@ -67,19 +94,18 @@
       <div class="topbar-row">
         <div class="topbar">
           <div class="topbar-left">
-            <button class="topbar-home-btn" type="button">Transactions</button>
             <button class="topbar-export-btn" type="button" id="exportBtn">
               <i class="fa-solid fa-arrow-up-from-bracket"></i> Export
             </button>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <a href="notifications.html" id="notificationBtn" style="position: relative; background: rgba(255,255,255,0.1); color: #fff; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Notifications">
-              <i class="fa-solid fa-bell" style="font-size: 1rem;"></i>
-              <span id="notifBadge" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 10px; border: 2px solid #111d17; min-width: 18px; text-align: center;">0</span>
+          <div style="display:flex; align-items:center; gap:15px;">
+            <a href="notifications.html" id="notificationBtn" style="position:relative; background:rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; text-decoration:none;" title="Notifications">
+              <i class="fa-solid fa-bell" style="font-size:1rem;"></i>
+              <span id="notifBadge" style="display:none; position:absolute; top:-2px; right:-2px; background:#ef4444; color:#fff; font-size:10px; font-weight:800; padding:2px 5px; border-radius:10px; border:2px solid #111d17; min-width:18px; text-align:center;">0</span>
             </a>
 
-            <a class="topbar-store" id="profileBtn" href="profile.html" style="text-decoration:none; color:inherit; display: flex; align-items: center; gap: 10px;">
+            <a class="topbar-store" id="profileBtn" href="profile.html" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:10px;">
               <span class="topbar-avatar" id="avatarContainer"></span>
               <span id="topbarStoreName">Loading...</span>
             </a>
@@ -87,47 +113,58 @@
         </div>
       </div>
 
-      <section class="txn-summary-row" style="display: flex; gap: 15px; margin-bottom: 25px;">
-        <div class="txn-summary-card" style="flex: 1; background: #fff; padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 14px;">
-          <span class="txn-summary-icon purple" style="width: 40px; height: 40px; background: #f3e8ff; color: #7e22ce; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-wallet"></i></span>
+      <section class="txn-summary-row" style="display:flex; gap:15px; margin-bottom:25px; flex-wrap:wrap;">
+        <div class="txn-summary-card" style="flex:1; min-width:150px; background:#fff; padding:16px; border-radius:16px; display:flex; align-items:center; gap:14px;">
+          <span class="txn-summary-icon purple" style="width:40px; height:40px; background:#f3e8ff; color:#7e22ce; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+            <i class="fa-solid fa-wallet"></i>
+          </span>
           <div class="inventory-stat-text">
-            <div class="label" style="font-size: 11px; color: #64748b; font-weight: 700;">Credit Sales</div>
-            <div class="value" id="statCreditSales" style="font-size: 1.2rem; color: #0f172a; font-weight: 800;">₱0.00</div>
+            <div class="label" style="font-size:11px; color:#64748b; font-weight:700;">Credit Sales</div>
+            <div class="value" id="statCreditSales" style="font-size:1.2rem; color:#0f172a; font-weight:800;">₱0.00</div>
           </div>
         </div>
-        <div class="txn-summary-card" style="flex: 1; background: #fff; padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 14px;">
-          <span class="txn-summary-icon orange" style="width: 40px; height: 40px; background: #ffedd5; color: #c2410c; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-sack-dollar"></i></span>
+
+        <div class="txn-summary-card" style="flex:1; min-width:150px; background:#fff; padding:16px; border-radius:16px; display:flex; align-items:center; gap:14px;">
+          <span class="txn-summary-icon orange" style="width:40px; height:40px; background:#ffedd5; color:#c2410c; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+            <i class="fa-solid fa-sack-dollar"></i>
+          </span>
           <div class="inventory-stat-text">
-            <div class="label" style="font-size: 11px; color: #64748b; font-weight: 700;">Cash Sales</div>
-            <div class="value" id="statCashSales" style="font-size: 1.2rem; color: #0f172a; font-weight: 800;">₱0.00</div>
+            <div class="label" style="font-size:11px; color:#64748b; font-weight:700;">Cash Sales</div>
+            <div class="value" id="statCashSales" style="font-size:1.2rem; color:#0f172a; font-weight:800;">₱0.00</div>
           </div>
         </div>
-        <div class="txn-summary-card" style="background: #fff; padding: 16px; border-radius: 16px; display: flex; align-items: center;">
-          <button class="txn-range-btn" type="button" style="background: #f1f5f9; border: none; padding: 8px 16px; border-radius: 12px; font-weight: 600; cursor: pointer;">Today <i class="fa-solid fa-chevron-down"></i></button>
+
+        <div class="txn-summary-card" style="background:#fff; padding:16px; border-radius:16px; display:flex; align-items:center;">
+          <button class="txn-range-btn" type="button" style="background:#f1f5f9; border:none; padding:8px 16px; border-radius:12px; font-weight:600; cursor:pointer;">
+            Today <i class="fa-solid fa-chevron-down"></i>
+          </button>
         </div>
-        <div class="txn-summary-card" style="flex: 1; background: #fff; padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 14px;">
-          <span class="txn-summary-icon green" style="width: 40px; height: 40px; background: #dcfce7; color: #15803d; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-receipt"></i></span>
+
+        <div class="txn-summary-card" style="flex:1; min-width:150px; background:#fff; padding:16px; border-radius:16px; display:flex; align-items:center; gap:14px;">
+          <span class="txn-summary-icon green" style="width:40px; height:40px; background:#dcfce7; color:#15803d; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+            <i class="fa-solid fa-receipt"></i>
+          </span>
           <div class="inventory-stat-text">
-            <div class="label" style="font-size: 11px; color: #64748b; font-weight: 700;">Transactions</div>
-            <div class="value" id="statTotalTransactions" style="font-size: 1.2rem; color: #0f172a; font-weight: 800;">0</div>
+            <div class="label" style="font-size:11px; color:#64748b; font-weight:700;">Transactions</div>
+            <div class="value" id="statTotalTransactions" style="font-size:1.2rem; color:#0f172a; font-weight:800;">0</div>
           </div>
         </div>
       </section>
 
-      <section class="inventory-table-panel" style="background: #fff; border-radius: 20px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-        <table class="inventory-table" style="width: 100%; border-collapse: collapse;">
+      <section class="inventory-table-panel" style="background:#fff; border-radius:20px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.1); overflow-x:auto;">
+        <table class="inventory-table" style="width:100%; border-collapse:collapse;">
           <thead>
-            <tr style="text-align: left; border-bottom: 1px solid #e2e8f0; color: #64748b; font-size: 0.85rem;">
-              <th style="padding-bottom: 12px;">Receipt</th>
-              <th style="padding-bottom: 12px;">Customer / Items</th>
-              <th style="padding-bottom: 12px;">Amount</th>
-              <th style="padding-bottom: 12px;">Payment</th>
-              <th class="actions-col" style="padding-bottom: 12px; text-align: right;">Actions</th>
+            <tr style="text-align:left; border-bottom:1px solid #e2e8f0; color:#64748b; font-size:0.85rem;">
+              <th style="padding-bottom:12px;">Receipt</th>
+              <th style="padding-bottom:12px;">Customer / Items</th>
+              <th style="padding-bottom:12px;">Amount</th>
+              <th style="padding-bottom:12px;">Payment</th>
+              <th class="actions-col" style="padding-bottom:12px; text-align:right;">Actions</th>
             </tr>
           </thead>
           <tbody id="transactionTableBody">
             <tr>
-              <td colspan="5" style="text-align: center; color: #7c8b82; padding: 30px;">Naglo-load ng transactions...</td>
+              <td colspan="5" style="text-align:center; color:#7c8b82; padding:30px;">Naglo-load ng transactions...</td>
             </tr>
           </tbody>
         </table>
@@ -136,37 +173,44 @@
     </main>
   </div>
 
-  <div id="receiptModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999; justify-content:center; align-items:center;">
-    <div style="background:#fff; padding:28px; border-radius:12px; width:320px; color:#333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: monospace;">
-      <div style="text-align:center; border-bottom: 2px dashed #ccc; padding-bottom: 12px; margin-bottom: 12px;">
+  <div id="receiptModal" style="display:none; position:fixed; inset:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999; justify-content:center; align-items:center;">
+    <div style="background:#fff; padding:28px; border-radius:12px; width:320px; max-width:calc(100% - 32px); color:#333; box-shadow:0 4px 15px rgba(0,0,0,0.2); font-family:monospace;">
+      <div style="text-align:center; border-bottom:2px dashed #ccc; padding-bottom:12px; margin-bottom:12px;">
         <h3 id="modalStoreName" style="margin:0; font-size:18px; font-weight:bold;">Store Name</h3>
         <p style="margin:4px 0 0; font-size:12px; color:#666;">Official Receipt</p>
       </div>
-      <div style="font-size: 13px; display:flex; flex-direction:column; gap:6px;">
-        <div style="display:flex; justify-content:space-between;">
+
+      <div style="font-size:13px; display:flex; flex-direction:column; gap:6px;">
+        <div style="display:flex; justify-content:space-between; gap:10px;">
           <span>Receipt ID:</span>
           <strong id="modalReceiptId">#T-0000</strong>
         </div>
-        <div style="display:flex; justify-content:space-between;">
+        <div style="display:flex; justify-content:space-between; gap:10px;">
           <span>Customer:</span>
           <strong id="modalCustomer">Walk-in Customer</strong>
         </div>
-        <div style="display:flex; justify-content:space-between;">
+        <div style="display:flex; justify-content:space-between; gap:10px;">
           <span>Payment:</span>
           <strong id="modalPayment">Cash</strong>
         </div>
-        <div style="display:flex; justify-content:space-between;">
+        <div style="display:flex; justify-content:space-between; gap:10px;">
           <span>Date:</span>
           <strong id="modalDate">Oct 11, 2026</strong>
         </div>
       </div>
-      <div style="border-top: 2px dashed #ccc; margin: 14px 0; padding-top: 10px; display:flex; justify-content:space-between; font-size:15px;">
+
+      <div style="border-top:2px dashed #ccc; margin:14px 0; padding-top:10px; display:flex; justify-content:space-between; gap:10px; font-size:15px;">
         <strong>Total Amount:</strong>
-        <strong id="modalAmount" style="color: #164a41;">₱0.00</strong>
+        <strong id="modalAmount" style="color:#164a41;">₱0.00</strong>
       </div>
+
       <div style="display:flex; gap:8px; margin-top:16px;">
-        <button type="button" id="printReceiptBtn" style="flex:1; padding:8px; border:none; background:#164a41; color:#fff; border-radius:6px; cursor:pointer; font-family:sans-serif; font-size:13px;"><i class="fa-solid fa-print"></i> Print</button>
-        <button type="button" id="closeReceiptBtn" style="flex:1; padding:8px; border:none; background:#ccc; border-radius:6px; cursor:pointer; font-family:sans-serif; font-size:13px;">Close</button>
+        <button type="button" id="printReceiptBtn" style="flex:1; padding:8px; border:none; background:#164a41; color:#fff; border-radius:6px; cursor:pointer; font-family:sans-serif; font-size:13px;">
+          <i class="fa-solid fa-print"></i> Print
+        </button>
+        <button type="button" id="closeReceiptBtn" style="flex:1; padding:8px; border:none; background:#ccc; border-radius:6px; cursor:pointer; font-family:sans-serif; font-size:13px;">
+          Close
+        </button>
       </div>
     </div>
   </div>

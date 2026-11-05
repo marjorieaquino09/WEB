@@ -4,13 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SARI - Inventory</title>
-  <link rel="stylesheet" href="css/dashboard.css?v=12.0">
-  <link rel="stylesheet" href="css/inventory.css?v=12.0">
-  <link rel="stylesheet" href="css/extra.css?v=12.0">
+
+  <link rel="stylesheet" href="css/dashboard.css?v=18.0">
+  <link rel="stylesheet" href="css/inventory.css?v=18.0">
+  <link rel="stylesheet" href="css/extra.css?v=18.0">
+  <link rel="stylesheet" href="css/style.css?v=18.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  
-  <link rel="stylesheet" href="css/style.css?v=12.0">
+
+  <style>
+    .sidebar-nav li.active,
+    .sidebar-nav li.active a,
+    .sidebar-nav .sidebar-link.active,
+    .sidebar-link.active,
+    a.sidebar-link[aria-current="page"] {
+      background: rgba(255, 255, 255, 0.12) !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      border-radius: 16px !important;
+    }
+
+    .sidebar-nav li.active .sidebar-icon,
+    .sidebar-nav .sidebar-link.active .sidebar-icon,
+    .sidebar-link.active .sidebar-icon,
+    a.sidebar-link[aria-current="page"] .sidebar-icon {
+      background-color: rgba(255, 255, 255, 0.2) !important;
+      color: #ffffff !important;
+    }
+  </style>
 </head>
 <body class="app-page">
 
@@ -18,7 +40,10 @@
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <a href="homepage.html" class="sidebar-logo">Sari</a>
+        <a href="homepage.html" class="sidebar-logo">
+          <img src="assets/sari-logo.jpg" alt="Sari Logo" class="sidebar-logo-img">
+          <span>Sari</span>
+        </a>
       </div>
 
       <nav class="sidebar-nav">
@@ -26,39 +51,41 @@
           <span class="sidebar-icon"><i class="fa-solid fa-house"></i></span>
           <span class="sidebar-label">Home</span>
         </a>
-        <a href="inventory.html" class="sidebar-link active">
+
+        <a href="inventory.html" class="sidebar-link active" aria-current="page">
           <span class="sidebar-icon"><i class="fa-solid fa-box"></i></span>
           <span class="sidebar-label">Inventory</span>
         </a>
+
         <a href="checkout.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-cash-register"></i></span>
           <span class="sidebar-label">Checkout</span>
         </a>
+
         <a href="dashboard.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-chart-pie"></i></span>
           <span class="sidebar-label">Dashboard</span>
         </a>
+
         <a href="credit-ledger.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-money-check-dollar"></i></span>
           <span class="sidebar-label">Credit Ledger</span>
         </a>
+
         <a href="transactions.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-receipt"></i></span>
           <span class="sidebar-label">Transactions</span>
         </a>
-        <a href="settings.html" class="sidebar-link">
-          <span class="sidebar-icon"><i class="fa-solid fa-gear"></i></span>
-          <span class="sidebar-label">Settings</span>
-        </a>
+
         <a href="profile.html" class="sidebar-link">
           <span class="sidebar-icon"><i class="fa-solid fa-user"></i></span>
-          <span class="sidebar-label">My Profile</span>
+          <span class="sidebar-label">Profile &amp; Settings</span>
         </a>
       </nav>
 
       <div class="sidebar-spacer"></div>
 
-      <button id="logoutBtn" class="sidebar-logout" style="background:none; border:none; cursor:pointer; width:100%; text-align:left; color:inherit;">
+      <button id="logoutBtn" class="sidebar-logout" type="button">
         <span class="sidebar-icon"><i class="fa-solid fa-arrow-right-from-bracket"></i></span>
         <span class="sidebar-label">Log Out</span>
       </button>
@@ -68,49 +95,63 @@
 
       <div class="topbar-row inv-topbar-row">
         <div class="topbar inv-topbar">
-          <div class="topbar-left">
-            <button class="topbar-home-btn" type="button">Inventory</button>
-          </div>
+          <div class="topbar-left"></div>
 
           <div class="inv-topbar-right">
-            <a href="notifications.html" id="notificationBtn" style="position: relative; background: rgba(255,255,255,0.1); color: #fff; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none;" title="Notifications">
-              <i class="fa-solid fa-bell" style="font-size: 1rem;"></i>
-              <span id="notifBadge" style="display: none; position: absolute; top: -2px; right: -2px; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 5px; border-radius: 10px; border: 2px solid #111d17; min-width: 18px; text-align: center;">0</span>
+            <a href="notifications.html"
+               id="notificationBtn"
+               class="inv-notification-btn"
+               title="Notifications"
+               aria-label="Notifications">
+              <i class="fa-solid fa-bell"></i>
+              <span id="notifBadge" class="inv-notification-badge">0</span>
             </a>
 
-            <a class="topbar-store" id="profileBtn" href="profile.html" style="text-decoration:none; color:inherit; display: flex; align-items: center; gap: 10px;">
+            <a class="topbar-store" id="profileBtn" href="profile.html">
               <span class="topbar-avatar" id="avatarContainer"></span>
-              <span id="topbarStoreName">Loading...</span>
+              <span id="topbarStoreName">Marie Store</span>
             </a>
           </div>
         </div>
       </div>
 
       <div class="inv-search-category-row">
-
         <div class="inv-search-wrapper">
           <div class="search-box inv-search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="inventorySearch" placeholder="Search product name or scan barcode...">
+            <input
+              type="text"
+              id="inventorySearch"
+              placeholder="Search product name or scan barcode..."
+              aria-label="Search inventory">
           </div>
-
-          <button type="button" id="startScanBtn" class="inv-scan-btn" title="Scan Barcode">
-            <i class="fa-solid fa-barcode"></i>
-          </button>
         </div>
 
-        <select id="categoryFilter" class="inv-category-select">
-          <option value="">All Categories</option>
-          <option value="Household">Household</option>
-          <option value="Beverage">Beverage</option>
-          <option value="Canned">Canned</option>
-          <option value="Alcohol">Alcohol</option>
-          <option value="Coffee & Tea">Coffee & Tea</option>
-          <option value="Biscuits">Biscuits</option>
-          <option value="Chips">Chips</option>
-          <option value="Condiments">Condiments</option>
-          <option value="Noodles">Noodles</option>
-        </select>
+        <div class="inv-category-actions">
+          <button
+            type="button"
+            id="startScanBtn"
+            class="barcode-btn"
+            title="Scan Barcode"
+            aria-label="Scan barcode">
+            <i class="fa-solid fa-barcode"></i>
+          </button>
+
+          <select id="categoryFilter"
+                  class="inv-category-select"
+                  aria-label="Filter by category">
+            <option value="">All Categories</option>
+            <option value="Household">Household</option>
+            <option value="Beverage">Beverage</option>
+            <option value="Canned">Canned</option>
+            <option value="Alcohol">Alcohol</option>
+            <option value="Coffee & Tea">Coffee &amp; Tea</option>
+            <option value="Biscuits">Biscuits</option>
+            <option value="Chips">Chips</option>
+            <option value="Condiments">Condiments</option>
+            <option value="Noodles">Noodles</option>
+          </select>
+        </div>
       </div>
 
       <div id="reader" class="inv-barcode-reader"></div>
@@ -118,77 +159,130 @@
       <div class="inv-grid-layout">
 
         <div>
-
           <div class="inv-summary-cards">
+
             <div class="inv-summary-card">
-              <div class="inv-card-icon green"><i class="fa-solid fa-box"></i></div>
+              <div class="inv-card-icon total">
+                <i class="fa-solid fa-box"></i>
+              </div>
               <div class="inv-card-label">TOTAL PRODUCTS</div>
-              <div id="statTotalProducts" class="inv-card-value">0</div>
+              <div id="statTotalProducts" class="inv-card-value">61</div>
             </div>
 
             <div class="inv-summary-card">
-              <div class="inv-card-icon yellow"><i class="fa-solid fa-triangle-exclamation"></i></div>
+              <div class="inv-card-icon low">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
               <div class="inv-card-label">LOW STOCK</div>
-              <div id="statLowStock" class="inv-card-value">0</div>
+              <div id="statLowStock" class="inv-card-value">1</div>
             </div>
 
             <div class="inv-summary-card">
-              <div class="inv-card-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+              <div class="inv-card-icon out">
+                <i class="fa-solid fa-circle-xmark"></i>
+              </div>
               <div class="inv-card-label">OUT OF STOCK</div>
               <div id="statOutOfStock" class="inv-card-value">0</div>
             </div>
 
             <div class="inv-summary-card">
-              <div class="inv-card-icon emerald"><i class="fa-solid fa-sack-dollar"></i></div>
+              <div class="inv-card-icon value">
+                <i class="fa-solid fa-sack-dollar"></i>
+              </div>
               <div class="inv-card-label">INVENTORY VALUE</div>
-              <div id="statInventoryValue" class="inv-card-value-large">₱0.00</div>
+              <div id="statInventoryValue" class="inv-card-value-large">₱27,443.00</div>
+            </div>
+
+          </div>
+
+          <div class="inv-table-wrapper-card">
+            <div class="inv-table-container">
+              <table class="inv-table">
+                <thead>
+                  <tr>
+                    <th>PRODUCT</th>
+                    <th>CATEGORY</th>
+                    <th>STOCK</th>
+                    <th>PRICE</th>
+                    <th>STATUS</th>
+                    <th>ACTIONS</th>
+                  </tr>
+                </thead>
+
+                <tbody id="inventoryTableBody">
+                  <tr>
+                    <td>
+                      <div class="inv-product-cell">
+                        <img src="assets/sample-product.png" alt="555 Tuna Afritada">
+                        <div class="inv-product-info">
+                          <strong>555 Tuna Afritada</strong>
+                          <small>Barcode: 80183901803190371903</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>Canned Goods</td>
+                    <td>16</td>
+                    <td><strong>₱33.00</strong></td>
+                    <td><span class="status-badge">In Stock</span></td>
+                    <td>
+                      <div class="action-buttons">
+                        <button class="edit-btn"><i class="fa-solid fa-pen"></i></button>
+                        <button class="delete-btn"><i class="fa-solid fa-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div id="inventoryPagination" class="inv-pagination">
+              <span>Showing <strong>1-20</strong> of <strong>61</strong> products</span>
+              <div class="pagination-controls">
+                <button>&lt; Previous</button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>4</button>
+                <button>Next &gt;</button>
+              </div>
             </div>
           </div>
 
-          <div class="inv-table-container">
-            <table class="inv-table">
-              <thead>
-                <tr>
-                  <th style="padding: 10px;">PRODUCT</th>
-                  <th style="padding: 10px;">CATEGORY</th>
-                  <th style="padding: 10px;">STOCK</th>
-                  <th style="padding: 10px;">PRICE</th>
-                  <th style="padding: 10px;">STATUS</th>
-                  <th style="padding: 10px; text-align: center;">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody id="inventoryTableBody">
-                <tr>
-                  <td colspan="6" class="inv-table-loading">Naglo-load ng mga produkto...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
 
         <div class="inv-form-card">
           <h3 class="inv-form-title">Add New Product</h3>
 
           <form id="addProductForm">
+
             <div class="inv-form-group">
-              <label class="inv-form-label">Product Name</label>
-              <input type="text" id="addName" placeholder="e.g. Lucky Me Pancit Canton" required class="inv-form-input">
+              <label class="inv-form-label" for="addName">Product Name</label>
+              <input
+                type="text"
+                id="addName"
+                placeholder="e.g. Lucky Me Pancit Canton"
+                required
+                class="inv-form-input">
             </div>
 
             <div class="inv-form-group">
-              <label class="inv-form-label">Barcode Number</label>
-              <input type="text" id="addBarcode" placeholder="e.g. 4800016643210" class="inv-form-input">
+              <label class="inv-form-label" for="addBarcode">Barcode Number</label>
+              <input
+                type="text"
+                id="addBarcode"
+                placeholder="e.g. 4800016643210"
+                class="inv-form-input">
             </div>
 
             <div class="inv-form-group">
-              <label class="inv-form-label">Category</label>
+              <label class="inv-form-label" for="addCategory">Category</label>
               <select id="addCategory" required class="inv-form-input">
                 <option value="">Select Category</option>
                 <option value="Household">Household</option>
                 <option value="Beverage">Beverage</option>
                 <option value="Canned">Canned</option>
                 <option value="Alcohol">Alcohol</option>
-                <option value="Coffee & Tea">Coffee & Tea</option>
+                <option value="Coffee & Tea">Coffee &amp; Tea</option>
                 <option value="Biscuits">Biscuits</option>
                 <option value="Chips">Chips</option>
                 <option value="Condiments">Condiments</option>
@@ -197,32 +291,52 @@
             </div>
 
             <div class="inv-form-group">
-              <label class="inv-form-label">Product Image (Optional)</label>
-              <input type="file" id="addImageFile" accept="image/*" class="inv-file-input">
+              <label class="inv-form-label" for="addImageFile">
+                Product Image (Optional)
+              </label>
+              <input
+                type="file"
+                id="addImageFile"
+                accept="image/*"
+                class="inv-file-input">
             </div>
 
             <div class="inv-form-group">
-              <label class="inv-form-label">Stock</label>
-              <input type="number" id="addStock" value="1" min="0" required class="inv-form-input">
+              <label class="inv-form-label" for="addStock">Stock</label>
+              <input
+                type="number"
+                id="addStock"
+                value="1"
+                min="0"
+                required
+                class="inv-form-input">
             </div>
 
             <div class="inv-form-group-lg">
-              <label class="inv-form-label">Price (₱)</label>
-              <input type="number" step="0.01" id="addPrice" placeholder="0.00" required class="inv-form-input">
+              <label class="inv-form-label" for="addPrice">Price (₱)</label>
+              <input
+                type="number"
+                step="0.01"
+                id="addPrice"
+                placeholder="0.00"
+                min="0"
+                required
+                class="inv-form-input">
             </div>
 
             <button type="submit" id="btnSaveProduct" class="inv-submit-btn">
               Save Product
             </button>
+
           </form>
         </div>
 
       </div>
-
     </main>
   </div>
 
-  <script src="js/script.js?v=11.0" type="module"></script>
-  <script type="module" src="js/inventory.js?v=11.0"></script>
+  <script src="js/script.js?v=18.0" type="module"></script>
+  <script src="js/inventory.js?v=18.0" type="module"></script>
+
 </body>
 </html>

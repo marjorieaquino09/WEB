@@ -15,8 +15,12 @@ import { initializeDefaultProducts } from "./init-products.js";
 let currentUserId = null;
 let selectedCategory = "";
 let searchQuery = "";
-let allProducts = [];
-let unsubscribeProducts = null;
+let rawUserInventory = [];
+let rawCatalogProducts = [];
+let mergedProducts = [];
+
+let unsubscribeUserInventory = null;
+let unsubscribeCatalog = null;
 
 onAuthStateChanged(auth, async (user) => {
   const isAuthPage = window.location.pathname.endsWith("login.html") ||
@@ -32,7 +36,6 @@ onAuthStateChanged(auth, async (user) => {
 
   currentUserId = user.uid;
 
-  // Render Topbar User Info & Profile Picture/Icon
   loadTopbarUserData(user);
 
   try {
@@ -46,7 +49,6 @@ onAuthStateChanged(auth, async (user) => {
   loadProductsRealtime();
 });
 
-// Function para sa Topbar Avatar at White Store Name
 async function loadTopbarUserData(user) {
   const topbarStoreName = document.getElementById("topbarStoreName");
   const avatarContainer =
@@ -100,36 +102,130 @@ async function loadTopbarUserData(user) {
 }
 
 function loadProductsRealtime() {
-  const productGrid = document.getElementById("productGrid");
+  if (unsubscribeUserInventory) unsubscribeUserInventory();
+  if (unsubscribeCatalog) unsubscribeCatalog();
 
-  if (unsubscribeProducts) unsubscribeProducts();
-
-  const q = query(collection(db, "products"), where("userId", "==", currentUserId));
-
-  unsubscribeProducts = onSnapshot(q, (querySnapshot) => {
-    allProducts = [];
+  const userInvRef = collection(db, "users", currentUserId, "inventory");
+  unsubscribeUserInventory = onSnapshot(userInvRef, (querySnapshot) => {
+    rawUserInventory = [];
     querySnapshot.forEach((docSnap) => {
-      allProducts.push({ id: docSnap.id, ...docSnap.data() });
+      const data = docSnap.data();
+      if (data.hidden !== true) {
+        rawUserInventory.push({ id: docSnap.id, ...data });
+      }
     });
-
-    renderProducts();
+    combineAndRenderProducts();
   }, (error) => {
-    console.error("Error fetching products:", error);
-    if (productGrid) {
-      productGrid.innerHTML = `<p style="color: #ffffff; grid-column: 1 / -1; text-align: center; padding: 40px;">Nagka-error sa pagkuha ng produkto.</p>`;
-    }
+    console.error("Error fetching user inventory:", error);
   });
+
+  const catalogRef = collection(db, "products");
+  unsubscribeCatalog = onSnapshot(catalogRef, (querySnapshot) => {
+    rawCatalogProducts = [];
+    querySnapshot.forEach((docSnap) => {
+      rawCatalogProducts.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    combineAndRenderProducts();
+  }, (error) => {
+    console.error("Error fetching catalog products:", error);
+  });
+}
+
+const SIZE_RE = /\b\d+(?:\.\d+)?\s?(?:ml|l|g|kg|oz|pcs|pc)\b/g;
+const STOP_WORDS = new Set(["sachet", "pack", "pc", "pcs", "piece", "and", "the", "of"]);
+
+function hasBarcode(item) {
+  const bc = String(item.barcode || "").trim();
+  return bc !== "" && bc.toUpperCase() !== "N/A";
+}
+
+function nameInfo(item) {
+  const raw = String(item.name || "").toLowerCase().replace(/['’`]/g, "");
+  const sizes = (raw.match(SIZE_RE) || []).map((s) => s.replace(/\s/g, ""));
+  const words = raw
+    .replace(SIZE_RE, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter((w) => w && !STOP_WORDS.has(w))
+    .map((w) => (w.length > 4 ? w.replace(/ing$/, "") : w));
+  return { sizes, words, compact: words.join("") };
+}
+
+function isSameProduct(a, b) {
+  const aHas = hasBarcode(a);
+  const bHas = hasBarcode(b);
+
+  if (aHas && bHas) {
+    return String(a.barcode).trim() === String(b.barcode).trim();
+  }
+
+  const x = nameInfo(a);
+  const y = nameInfo(b);
+  if (!x.compact || !y.compact) return false;
+
+  if (x.sizes.length && y.sizes.length && x.sizes.join() !== y.sizes.join()) {
+    return false;
+  }
+
+  if (x.compact === y.compact) return true;
+
+  const [small, large] = x.words.length <= y.words.length ? [x, y] : [y, x];
+  return (
+    small.words.length >= 2 &&
+    large.words.length - small.words.length <= 1 &&
+    small.words.every((w) => large.words.includes(w))
+  );
+}
+
+function combineAndRenderProducts() {
+  const allItems = [...rawUserInventory, ...rawCatalogProducts].sort((a, b) => {
+    const diff = Number(hasBarcode(b)) - Number(hasBarcode(a));
+    if (diff !== 0) return diff;
+    return Number(b.stock ?? b.stock_quantity ?? 0) - Number(a.stock ?? a.stock_quantity ?? 0);
+  });
+
+  const groups = [];
+
+  allItems.forEach((item) => {
+    const stock = Number(item.stock ?? item.stock_quantity ?? 0);
+    const price = Number(item.price || 0);
+    const image = item.imageUrl || item.image || "default.jpg";
+
+    const group = groups.find((g) => isSameProduct(g, item));
+
+    if (!group) {
+      groups.push({ ...item, stock, price, image });
+      return;
+    }
+
+    group.stock = Math.max(Number(group.stock || 0), stock);
+    if (!(Number(group.price) > 0)) group.price = price;
+    if (!hasBarcode(group) && hasBarcode(item)) group.barcode = item.barcode;
+    if (!group.image || group.image === "default.jpg") group.image = image;
+  });
+
+  mergedProducts = groups.map((p) => ({
+    ...p,
+    stock: Number(p.stock || 0),
+    price: Number(p.price || 0),
+    image: p.imageUrl || p.image || "default.jpg"
+  }));
+
+  mergedProducts.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+  renderProducts();
 }
 
 function renderProducts() {
   const productGrid = document.getElementById("productGrid");
   if (!productGrid) return;
 
-  const filtered = allProducts.filter((p) => {
+  const filtered = mergedProducts.filter((p) => {
     const matchCategory = !selectedCategory || selectedCategory === "All" || p.category === selectedCategory;
     const matchSearch = !searchQuery ||
       (p.name && p.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (p.barcode && p.barcode.includes(searchQuery));
+      (p.barcode && p.barcode.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchCategory && matchSearch;
   });
 
@@ -154,22 +250,22 @@ function renderProducts() {
 
     return `
       <div class="product-card">
-        <div>
+        <div class="product-card-img-wrap">
           <img src="${imgSource}" alt="${p.name || 'Product'}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=SARI';">
         </div>
         <div class="product-info">
           <div class="product-category">${p.category || 'General'}</div>
           <div class="product-title">${p.name || ''}</div>
-          <div style="font-size: 0.72rem; color: #64748b; margin-bottom: 4px;">Barcode: ${p.barcode || 'N/A'}</div>
+          <div class="product-barcode">Barcode: ${p.barcode || 'N/A'}</div>
           <div class="product-price">₱${Number(p.price || 0).toFixed(2)}</div>
         </div>
         <div class="product-bottom-row">
-          <span style="font-size: 0.75rem; font-weight: 700; color: ${stock > 0 ? '#4a9c62' : '#d1544a'};">
+          <span class="product-stock" style="color: ${stock > 0 ? '#059669' : '#d1544a'};">
             Stock: ${stock}
           </span>
           ${
             stock === 0
-              ? `<span style="font-size: 0.75rem; color: #94a3b8; font-weight: 700;">Out of Stock</span>`
+              ? `<span style="font-size: 0.62rem; color: #94a3b8; font-weight: 700;">Out of Stock</span>`
               : ``
           }
         </div>

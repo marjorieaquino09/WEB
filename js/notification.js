@@ -7,7 +7,7 @@ import {
   getDoc,
   doc,
   onSnapshot,
-  writeBatch
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import {
   onAuthStateChanged
@@ -53,6 +53,7 @@ onAuthStateChanged(auth, async (user) => {
     showMessage("Please log in first.", "error");
     if (storeName) {
       storeName.innerText = "Not Logged In";
+      storeName.style.color = "#ffffff";
     }
     return;
   }
@@ -70,144 +71,237 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 async function loadUserProfile() {
+  if (storeName) {
+    storeName.style.color = "#ffffff";
+    storeName.style.fontWeight = "700";
+  }
+
   try {
     const savedStoreName = localStorage.getItem("customStoreName");
     const savedImage = localStorage.getItem("userProfileImage");
 
-    if (storeName) {
-      storeName.innerText = savedStoreName || "My Store";
-    }
-
-    if (avatar) {
-      if (savedImage) {
-        avatar.innerHTML = `<img src="${escapeHtml(savedImage)}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="Avatar">`;
-      } else {
-        avatar.innerText = (savedStoreName || "S").charAt(0).toUpperCase();
-      }
-    }
-
     const userRef = doc(db, "users", currentUserId);
     const userSnap = await getDoc(userRef);
 
+    let nameToDisplay = savedStoreName || "My Store";
+    let profileImg = savedImage || null;
+
     if (userSnap.exists()) {
       const data = userSnap.data();
-      const nameToDisplay = savedStoreName || data.store_name || data.full_name || "My Store";
-      
-      if (storeName) storeName.innerText = nameToDisplay;
-      
-      if (avatar && !savedImage) {
-        if (data.profile_image) {
-          avatar.innerHTML = `<img src="${escapeHtml(data.profile_image)}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="Avatar">`;
-        } else {
-          avatar.innerText = nameToDisplay.charAt(0).toUpperCase();
-        }
+      nameToDisplay = savedStoreName || data.store_name || data.full_name || "My Store";
+      if (!profileImg && data.profile_image) {
+        profileImg = data.profile_image;
+      }
+    }
+
+    if (storeName) {
+      storeName.innerText = nameToDisplay;
+    }
+
+    if (avatar) {
+      avatar.style.width = "32px";
+      avatar.style.height = "32px";
+      avatar.style.borderRadius = "50%";
+      avatar.style.display = "flex";
+      avatar.style.alignItems = "center";
+      avatar.style.justifyContent = "center";
+      avatar.style.backgroundColor = "#ffffff";
+      avatar.style.color = "#1b382b";
+      avatar.style.fontWeight = "700";
+      avatar.style.fontSize = "0.9rem";
+      avatar.style.overflow = "hidden";
+
+      if (profileImg) {
+        avatar.innerHTML = `<img src="${escapeHtml(profileImg)}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="Avatar">`;
+      } else {
+        const initialLetter = nameToDisplay.charAt(0).toUpperCase();
+        avatar.innerText = initialLetter;
       }
     }
   } catch (error) {
     console.error("Profile error:", error);
+    if (storeName) storeName.innerText = "My Store";
   }
 }
 
 async function loadAllNotifications() {
-  const productsQuery = query(collection(db, "products"), where("userId", "==", currentUserId));
-  const transactionsQuery = query(collection(db, "transactions"), where("userId", "==", currentUserId));
-  const creditsQuery = query(collection(db, "credits"), where("userId", "==", currentUserId));
-  const notifsQuery = query(collection(db, "notifications"), where("userId", "==", currentUserId));
+  const userProductsQuery = collection(db, "users", currentUserId, "inventory");
+  const rootProductsQuery = query(collection(db, "products"), where("userId", "==", currentUserId));
 
-  const [productsSnapshot, transactionsSnapshot, creditsSnapshot, notifsSnapshot] = await Promise.all([
-    getDocs(productsQuery),
-    getDocs(transactionsQuery),
-    getDocs(creditsQuery),
-    getDocs(notifsQuery)
+  const userTransactionsQuery = collection(db, "users", currentUserId, "transactions");
+  const rootTransactionsQuery = query(collection(db, "transactions"), where("userId", "==", currentUserId));
+
+  const userCreditsQuery = collection(db, "users", currentUserId, "credits");
+  const rootCreditsQuery = query(collection(db, "credits"), where("userId", "==", currentUserId));
+
+  const userNotifsQuery = collection(db, "users", currentUserId, "notifications");
+  const rootNotifsQuery = query(collection(db, "notifications"), where("userId", "==", currentUserId));
+
+  const [
+    uProdSnap, rProdSnap,
+    uTxnSnap, rTxnSnap,
+    uCredSnap, rCredSnap,
+    uNotifSnap, rNotifSnap
+  ] = await Promise.all([
+    getDocs(userProductsQuery).catch(() => ({ docs: [] })),
+    getDocs(rootProductsQuery).catch(() => ({ docs: [] })),
+    getDocs(userTransactionsQuery).catch(() => ({ docs: [] })),
+    getDocs(rootTransactionsQuery).catch(() => ({ docs: [] })),
+    getDocs(userCreditsQuery).catch(() => ({ docs: [] })),
+    getDocs(rootCreditsQuery).catch(() => ({ docs: [] })),
+    getDocs(userNotifsQuery).catch(() => ({ docs: [] })),
+    getDocs(rootNotifsQuery).catch(() => ({ docs: [] }))
   ]);
 
-  productsData = [];
-  productsSnapshot.forEach(docSnap => productsData.push({ id: docSnap.id, ...docSnap.data() }));
+  const prodMap = new Map();
+  [...rProdSnap.docs, ...uProdSnap.docs].forEach(docSnap => {
+    prodMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+  });
+  productsData = Array.from(prodMap.values());
 
-  transactionsData = [];
-  transactionsSnapshot.forEach(docSnap => transactionsData.push({ id: docSnap.id, ...docSnap.data() }));
+  const txnMap = new Map();
+  [...rTxnSnap.docs, ...uTxnSnap.docs].forEach(docSnap => {
+    txnMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+  });
+  transactionsData = Array.from(txnMap.values());
 
-  creditsData = [];
-  creditsSnapshot.forEach(docSnap => creditsData.push({ id: docSnap.id, ...docSnap.data() }));
+  const credMap = new Map();
+  [...rCredSnap.docs, ...uCredSnap.docs].forEach(docSnap => {
+    credMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+  });
+  creditsData = Array.from(credMap.values());
 
-  directNotificationsData = [];
-  const unreadNotifIds = [];
+  const notifMap = new Map();
+  const unreadNotifRefs = [];
 
-  notifsSnapshot.forEach(docSnap => {
+  [...rNotifSnap.docs, ...uNotifSnap.docs].forEach(docSnap => {
     const data = docSnap.data();
-    directNotificationsData.push({ id: docSnap.id, ...data });
-    if (!data.isRead) {
-      unreadNotifIds.push(docSnap.id);
+    const isSub = docSnap.ref.path.includes(`/users/${currentUserId}/`);
+    notifMap.set(docSnap.id, { id: docSnap.id, isSubcollection: isSub, ...data });
+
+    if (data.isRead !== true) {
+      unreadNotifRefs.push({ ref: docSnap.ref });
     }
   });
+  directNotificationsData = Array.from(notifMap.values());
 
   renderAll();
 
-  if (unreadNotifIds.length > 0) {
-    await markNotificationsAsRead(unreadNotifIds);
+  if (unreadNotifRefs.length > 0) {
+    await markNotificationsAsReadRefs(unreadNotifRefs);
   } else {
     clearNotifBadge();
   }
 }
 
 function startRealtimeListeners() {
-  const productsQuery = query(collection(db, "products"), where("userId", "==", currentUserId));
-  const transactionsQuery = query(collection(db, "transactions"), where("userId", "==", currentUserId));
-  const creditsQuery = query(collection(db, "credits"), where("userId", "==", currentUserId));
-  const notifsQuery = query(collection(db, "notifications"), where("userId", "==", currentUserId));
+  const userProductsRef = collection(db, "users", currentUserId, "inventory");
+  const userTransactionsRef = collection(db, "users", currentUserId, "transactions");
+  const userCreditsRef = collection(db, "users", currentUserId, "credits");
+  const userNotifsRef = collection(db, "users", currentUserId, "notifications");
 
-  onSnapshot(productsQuery, (snapshot) => {
-    productsData = [];
-    snapshot.forEach(docSnap => productsData.push({ id: docSnap.id, ...docSnap.data() }));
-    renderAll();
-  });
+  const rootProductsRef = query(collection(db, "products"), where("userId", "==", currentUserId));
+  const rootTransactionsRef = query(collection(db, "transactions"), where("userId", "==", currentUserId));
+  const rootCreditsRef = query(collection(db, "credits"), where("userId", "==", currentUserId));
+  const rootNotifsRef = query(collection(db, "notifications"), where("userId", "==", currentUserId));
 
-  onSnapshot(transactionsQuery, (snapshot) => {
-    transactionsData = [];
-    snapshot.forEach(docSnap => transactionsData.push({ id: docSnap.id, ...docSnap.data() }));
-    renderAll();
-  });
+  let rProds = [], uProds = [];
+  let rTxns = [], uTxns = [];
+  let rCreds = [], uCreds = [];
+  let rNotifs = [], uNotifs = [];
 
-  onSnapshot(creditsQuery, (snapshot) => {
-    creditsData = [];
-    snapshot.forEach(docSnap => creditsData.push({ id: docSnap.id, ...docSnap.data() }));
-    renderAll();
-  });
+  const updateAndRender = () => {
+    const pMap = new Map();
+    [...rProds, ...uProds].forEach(p => pMap.set(p.id, p));
+    productsData = Array.from(pMap.values());
 
-  onSnapshot(notifsQuery, (snapshot) => {
-    directNotificationsData = [];
-    const unreadIds = [];
+    const tMap = new Map();
+    [...rTxns, ...uTxns].forEach(t => tMap.set(t.id, t));
+    transactionsData = Array.from(tMap.values());
 
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      directNotificationsData.push({ id: docSnap.id, ...data });
-      if (!data.isRead) {
-        unreadIds.push(docSnap.id);
+    const cMap = new Map();
+    [...rCreds, ...uCreds].forEach(c => cMap.set(c.id, c));
+    creditsData = Array.from(cMap.values());
+
+    const nMap = new Map();
+    const unreadRefs = [];
+    [...rNotifs, ...uNotifs].forEach(n => {
+      nMap.set(n.id, n);
+      if (n.isRead !== true && n.docRef) {
+        unreadRefs.push({ ref: n.docRef });
       }
     });
+    directNotificationsData = Array.from(nMap.values());
 
     renderAll();
 
-    if (unreadIds.length > 0) {
-      markNotificationsAsRead(unreadIds);
+    if (unreadRefs.length > 0) {
+      markNotificationsAsReadRefs(unreadRefs);
     } else {
       clearNotifBadge();
     }
+  };
+
+  onSnapshot(userProductsRef, snap => {
+    uProds = [];
+    snap.forEach(d => uProds.push({ id: d.id, ...d.data() }));
+    updateAndRender();
+  });
+
+  onSnapshot(rootProductsRef, snap => {
+    rProds = [];
+    snap.forEach(d => rProds.push({ id: d.id, ...d.data() }));
+    updateAndRender();
+  });
+
+  onSnapshot(userTransactionsRef, snap => {
+    uTxns = [];
+    snap.forEach(d => uTxns.push({ id: d.id, ...d.data() }));
+    updateAndRender();
+  });
+
+  onSnapshot(rootTransactionsRef, snap => {
+    rTxns = [];
+    snap.forEach(d => rTxns.push({ id: d.id, ...d.data() }));
+    updateAndRender();
+  });
+
+  onSnapshot(userCreditsRef, snap => {
+    uCreds = [];
+    snap.forEach(d => uCreds.push({ id: d.id, ...d.data() }));
+    updateAndRender();
+  });
+
+  onSnapshot(rootCreditsRef, snap => {
+    rCreds = [];
+    snap.forEach(d => rCreds.push({ id: d.id, ...d.data() }));
+    updateAndRender();
+  });
+
+  onSnapshot(userNotifsRef, snap => {
+    uNotifs = [];
+    snap.forEach(d => uNotifs.push({ id: d.id, docRef: d.ref, ...d.data() }));
+    updateAndRender();
+  });
+
+  onSnapshot(rootNotifsRef, snap => {
+    rNotifs = [];
+    snap.forEach(d => rNotifs.push({ id: d.id, docRef: d.ref, ...d.data() }));
+    updateAndRender();
   });
 }
 
-async function markNotificationsAsRead(docIds) {
-  try {
-    const batch = writeBatch(db);
-    docIds.forEach((id) => {
-      const docRef = doc(db, "notifications", id);
-      batch.update(docRef, { isRead: true });
-    });
-    await batch.commit();
-    clearNotifBadge();
-  } catch (err) {
-    console.error("Error updating notification read status:", err);
+async function markNotificationsAsReadRefs(notifRefList) {
+  const results = await Promise.allSettled(
+    notifRefList.map((item) => updateDoc(item.ref, { isRead: true, read: true }))
+  );
+
+  const failed = results.filter((r) => r.status === "rejected");
+  if (failed.length > 0) {
+    console.error("Hindi na-mark as read:", failed.map((f) => f.reason));
   }
+
+  clearNotifBadge();
 }
 
 function clearNotifBadge() {
@@ -224,6 +318,39 @@ function renderAll() {
   renderNotifications(notifications);
 }
 
+function pickMessage(n) {
+  const candidates = [
+    n.message, n.description, n.body, n.subtitle, n.text,
+    n.content, n.detail, n.details, n.msg, n.note
+  ];
+  for (const c of candidates) {
+    if (typeof c === "string" && c.trim()) return c.trim();
+  }
+
+  const peso = (v) => `₱${Number(v).toFixed(2)}`;
+  const parts = [];
+
+  const product = n.productName || n.product_name || n.product || n.name;
+  if (typeof product === "string" && product.trim()) {
+    parts.push(product.trim());
+  }
+  if (n.stock !== undefined && n.stock !== null && n.stock !== "") {
+    parts.push(`${n.stock} left`);
+  }
+  if (n.customerName || n.customer_name) {
+    parts.push(String(n.customerName || n.customer_name));
+  }
+  if (n.paymentMethod || n.payment_method) {
+    parts.push(String(n.paymentMethod || n.payment_method));
+  }
+  const total = n.total ?? n.totalAmount ?? n.amount;
+  if (total !== undefined && total !== null && total !== "" && !Number.isNaN(Number(total))) {
+    parts.push(peso(total));
+  }
+
+  return parts.join(" — ");
+}
+
 function buildNotifications() {
   const notifications = [];
 
@@ -231,21 +358,26 @@ function buildNotifications() {
     let iconClass = "fa-bell";
     let colorHex = "#60a5fa";
 
-    if (notif.category === "danger" || (notif.title && notif.title.includes("Out of Stock"))) {
+    const titleLower = String(notif.title || "").toLowerCase();
+
+    if (notif.category === "danger" || titleLower.includes("out of stock")) {
       iconClass = "fa-circle-xmark";
       colorHex = "#ef4444";
-    } else if (notif.category === "warning" || (notif.title && notif.title.includes("Low Stock"))) {
+    } else if (notif.category === "warning" || titleLower.includes("low stock")) {
       iconClass = "fa-triangle-exclamation";
       colorHex = "#f59e0b";
+    } else if (notif.category === "sales" || notif.type === "sale") {
+      iconClass = "fa-receipt";
+      colorHex = "#22c55e";
     } else {
       iconClass = "fa-box";
       colorHex = "#22c55e";
     }
 
     notifications.push({
-      type: "inventory",
+      type: notif.type || "inventory",
       title: notif.title || "Inventory Alert",
-      message: notif.message || notif.description || "",
+      message: pickMessage(notif),
       icon: iconClass,
       color: colorHex,
       time: getTime(notif.created_at || notif.createdAt)
@@ -253,14 +385,15 @@ function buildNotifications() {
   });
 
   productsData.forEach((product) => {
-    const stock = Number(product.stock || 0);
+    const stock = Number(product.stock ?? product.stock_quantity ?? 0);
     const prodTime = getTime(product.updatedAt || product.updated_at || product.createdAt || product.created_at);
 
-    const isAlreadyInDirect = directNotificationsData.some(d => 
-      (d.message && d.message.includes(product.name)) || (d.description && d.description.includes(product.name))
-    );
+    const isAlreadyInDirect = directNotificationsData.some(d => {
+      const msg = pickMessage(d);
+      return msg && product.name && msg.includes(product.name);
+    });
 
-    if (!isAlreadyInDirect) {
+    if (!isAlreadyInDirect && product.hidden !== true) {
       if (stock === 0) {
         notifications.push({
           type: "inventory",
@@ -288,14 +421,21 @@ function buildNotifications() {
     const customer = transaction.customerName || transaction.customer_name || "Walk-in Customer";
     const method = transaction.paymentMethod || transaction.payment_method || "Cash";
 
-    notifications.push({
-      type: "transaction",
-      title: "New Transaction",
-      message: `${customer} — ${method} — ₱${amount.toFixed(2)}`,
-      icon: "fa-receipt",
-      color: "#60a5fa",
-      time: getTime(transaction.createdAt || transaction.created_at)
+    const isAlreadyInDirect = directNotificationsData.some(d => {
+      const msg = pickMessage(d);
+      return msg && msg.includes(`₱${amount.toFixed(2)}`);
     });
+
+    if (!isAlreadyInDirect) {
+      notifications.push({
+        type: "transaction",
+        title: "New Transaction",
+        message: `${customer} — ${method} — ₱${amount.toFixed(2)}`,
+        icon: "fa-receipt",
+        color: "#60a5fa",
+        time: getTime(transaction.createdAt || transaction.created_at)
+      });
+    }
   });
 
   creditsData.forEach((credit) => {
@@ -322,7 +462,7 @@ function updateSummary(notifications) {
   if (!summary) return;
 
   const inventory = notifications.filter(item => item.type === "inventory").length;
-  const transactions = notifications.filter(item => item.type === "transaction").length;
+  const transactions = notifications.filter(item => item.type === "transaction" || item.type === "sale").length;
   const credits = notifications.filter(item => item.type === "credit").length;
 
   if (inventory === 0 && transactions === 0 && credits === 0) {
