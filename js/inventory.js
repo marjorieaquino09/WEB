@@ -75,63 +75,54 @@ async function seedDefaultInventoryIfNeeded() {
 
     if (
       userSnap.exists() &&
-      userSnap.data().default_inventory_seeded
+      userSnap.data().default_inventory_seeded_v2
     ) {
       return;
     }
 
-    const invRef = collection(
-      db,
-      "users",
-      currentUserId,
-      "inventory"
+    const invRef = collection(db, "users", currentUserId, "inventory");
+
+    const [defaultsSnap, existingSnap] = await Promise.all([
+      getDocs(collection(db, "products")),
+      getDocs(invRef)
+    ]);
+
+    const existingIds = new Set(existingSnap.docs.map((d) => d.id));
+
+    const defaults = defaultsSnap.docs.filter(
+      (item) => DEFAULT_FILTER(item.data()) && !existingIds.has(item.id)
     );
 
-    const existing = await getDocs(query(invRef, limit(1)));
-    let seededCount = 0;
+    for (let i = 0; i < defaults.length; i += 400) {
+      const batch = writeBatch(db);
 
-    if (existing.empty) {
-      const defaultsSnap = await getDocs(
-        collection(db, "products")
-      );
+      defaults.slice(i, i + 400).forEach((item) => {
+        const data = item.data();
+        const image = data.image || data.imageUrl || "default.jpg";
 
-      const defaults = defaultsSnap.docs.filter((item) =>
-        DEFAULT_FILTER(item.data())
-      );
-
-      for (let i = 0; i < defaults.length; i += 400) {
-        const batch = writeBatch(db);
-
-        defaults.slice(i, i + 400).forEach((item) => {
-          const data = item.data();
-          const image = data.image || data.imageUrl || "default.jpg";
-
-          batch.set(doc(invRef, item.id), {
-            userId: currentUserId,
-            name: data.name || "",
-            category: data.category || "General",
-            barcode: data.barcode || "",
-            price: Number(data.price || 0),
-            stock: Number(data.stock || 0),
-            image,
-            imageUrl: image,
-            hidden: false,
-            isDefault: true,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp()
-          });
+        batch.set(doc(invRef, item.id), {
+          userId: currentUserId,
+          name: data.name || "",
+          category: data.category || "General",
+          barcode: data.barcode || "",
+          price: Number(data.price || 0),
+          stock: Number(data.stock ?? 0),
+          image,
+          imageUrl: image,
+          hidden: false,
+          isDefault: true,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         });
+      });
 
-        await batch.commit();
-      }
-
-      seededCount = defaults.length;
+      await batch.commit();
     }
 
-    if (!existing.empty || seededCount > 0) {
+    if (defaultsSnap.size > 0) {
       await setDoc(
         userRef,
-        { default_inventory_seeded: true },
+        { default_inventory_seeded_v2: true },
         { merge: true }
       );
     }
@@ -162,9 +153,7 @@ checkAuth(async (user) => {
   }
 
   try {
-    const userDoc = await getDoc(
-      doc(db, "users", currentUserId)
-    );
+    const userDoc = await getDoc(doc(db, "users", currentUserId));
 
     let profileImg = null;
 
@@ -185,8 +174,7 @@ checkAuth(async (user) => {
 
     if (avatarContainer) {
       if (profileImg) {
-        avatarContainer.style.backgroundImage =
-          `url("${profileImg}")`;
+        avatarContainer.style.backgroundImage = `url("${profileImg}")`;
         avatarContainer.style.backgroundSize = "cover";
         avatarContainer.style.backgroundPosition = "center";
         avatarContainer.innerHTML = "";
@@ -200,8 +188,7 @@ checkAuth(async (user) => {
         avatarContainer.style.borderRadius = "50%";
         avatarContainer.style.width = "32px";
         avatarContainer.style.height = "32px";
-        avatarContainer.innerHTML =
-          '<i class="fa-solid fa-user"></i>';
+        avatarContainer.innerHTML = '<i class="fa-solid fa-user"></i>';
       }
     }
   } catch (err) {
@@ -242,20 +229,14 @@ function loadInventoryRealtime() {
       allProducts = [];
 
       snapshot.forEach((productDoc) => {
-        const data = productDoc.data();
-
-        if (!data.hidden) {
-          allProducts.push({
-            id: productDoc.id,
-            ...data
-          });
-        }
+        allProducts.push({
+          id: productDoc.id,
+          ...productDoc.data()
+        });
       });
 
       allProducts.sort((a, b) =>
-        String(a.name || "").localeCompare(
-          String(b.name || "")
-        )
+        String(a.name || "").localeCompare(String(b.name || ""))
       );
 
       console.log(
@@ -275,8 +256,7 @@ function loadInventoryRealtime() {
         err.message
       );
 
-      const tableBody =
-        document.getElementById("inventoryTableBody");
+      const tableBody = document.getElementById("inventoryTableBody");
 
       if (tableBody) {
         tableBody.innerHTML = `
@@ -332,21 +312,19 @@ function updateSummaryCards() {
 
 function getStatusBadge(stock) {
   const stockNum = Number(stock) || 0;
+
   if (stockNum === 0) {
     return `<span class="status-badge out-of-stock">Out of Stock</span>`;
   } else if (stockNum <= 5) {
     return `<span class="status-badge low-stock">Low Stock</span>`;
-  } else {
-    return `<span class="status-badge in-stock">In Stock</span>`;
   }
+
+  return `<span class="status-badge in-stock">In Stock</span>`;
 }
 
 function renderInventoryTable() {
-  const tableBody =
-    document.getElementById("inventoryTableBody");
-
-  const pagination =
-    document.getElementById("inventoryPagination");
+  const tableBody = document.getElementById("inventoryTableBody");
+  const pagination = document.getElementById("inventoryPagination");
 
   if (!tableBody) return;
 
@@ -369,9 +347,7 @@ function renderInventoryTable() {
   });
 
   const totalProducts = filtered.length;
-  const totalPages = Math.ceil(
-    totalProducts / PRODUCTS_PER_PAGE
-  );
+  const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
 
   if (totalPages === 0) {
     currentPage = 1;
@@ -393,8 +369,7 @@ function renderInventoryTable() {
     return;
   }
 
-  const startIndex =
-    (currentPage - 1) * PRODUCTS_PER_PAGE;
+  const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
 
   const pageProducts = filtered.slice(
     startIndex,
@@ -423,12 +398,8 @@ function renderInventoryTable() {
 
     const id = escapeInventoryText(product.id);
     const name = escapeInventoryText(product.name || "");
-    const barcode = escapeInventoryText(
-      product.barcode || "N/A"
-    );
-    const category = escapeInventoryText(
-      product.category || "General"
-    );
+    const barcode = escapeInventoryText(product.barcode || "N/A");
+    const category = escapeInventoryText(product.category || "General");
 
     return `
       <tr class="inv-product-row">
@@ -492,8 +463,7 @@ function renderInventoryTable() {
 }
 
 function renderPagination(totalProducts, totalPages, startIndex) {
-  const pagination =
-    document.getElementById("inventoryPagination");
+  const pagination = document.getElementById("inventoryPagination");
 
   if (!pagination) return;
 
@@ -575,22 +545,16 @@ function renderPagination(totalProducts, totalPages, startIndex) {
 }
 
 function populateEditForm(id) {
-  const product = allProducts.find(
-    (item) => item.id === id
-  );
+  const product = allProducts.find((item) => item.id === id);
 
   if (!product) return;
 
   editingProductId = id;
 
-  document.getElementById("addName").value =
-    product.name || "";
+  document.getElementById("addName").value = product.name || "";
+  document.getElementById("addCategory").value = product.category || "";
 
-  document.getElementById("addCategory").value =
-    product.category || "";
-
-  const barcodeInput =
-    document.getElementById("addBarcode");
+  const barcodeInput = document.getElementById("addBarcode");
 
   if (barcodeInput) {
     barcodeInput.value = product.barcode || "";
@@ -599,8 +563,7 @@ function populateEditForm(id) {
   document.getElementById("addStock").value =
     product.stock !== undefined ? product.stock : 0;
 
-  document.getElementById("addPrice").value =
-    product.price || 0;
+  document.getElementById("addPrice").value = product.price || 0;
 
   const button = document.getElementById("btnSaveProduct");
 
@@ -616,8 +579,7 @@ function populateEditForm(id) {
     });
 }
 
-const addProductForm =
-  document.getElementById("addProductForm");
+const addProductForm = document.getElementById("addProductForm");
 
 if (addProductForm) {
   addProductForm.addEventListener("submit", async (event) => {
@@ -628,29 +590,16 @@ if (addProductForm) {
       return;
     }
 
-    const name =
-      document.getElementById("addName").value.trim();
+    const name = document.getElementById("addName").value.trim();
+    const category = document.getElementById("addCategory").value;
 
-    const category =
-      document.getElementById("addCategory").value;
+    const barcodeInput = document.getElementById("addBarcode");
+    const barcode = barcodeInput ? barcodeInput.value.trim() : "";
 
-    const barcodeInput =
-      document.getElementById("addBarcode");
+    const stock = Number(document.getElementById("addStock").value);
+    const price = Number(document.getElementById("addPrice").value);
 
-    const barcode = barcodeInput
-      ? barcodeInput.value.trim()
-      : "";
-
-    const stock = Number(
-      document.getElementById("addStock").value
-    );
-
-    const price = Number(
-      document.getElementById("addPrice").value
-    );
-
-    const fileInput =
-      document.getElementById("addImageFile");
+    const fileInput = document.getElementById("addImageFile");
 
     if (
       !name ||
@@ -665,9 +614,7 @@ if (addProductForm) {
     }
 
     const existingProduct = editingProductId
-      ? allProducts.find(
-          (product) => product.id === editingProductId
-        )
+      ? allProducts.find((product) => product.id === editingProductId)
       : null;
 
     let imageString =
@@ -726,8 +673,7 @@ async function saveOrUpdateToFirestore(
   price,
   image
 ) {
-  const button =
-    document.getElementById("btnSaveProduct");
+  const button = document.getElementById("btnSaveProduct");
 
   const wasEditing = Boolean(editingProductId);
 
@@ -738,9 +684,7 @@ async function saveOrUpdateToFirestore(
 
     if (button) {
       button.disabled = true;
-      button.innerText = wasEditing
-        ? "Updating..."
-        : "Saving...";
+      button.innerText = wasEditing ? "Updating..." : "Saving...";
     }
 
     const inventoryRef = collection(
@@ -751,10 +695,7 @@ async function saveOrUpdateToFirestore(
     );
 
     if (editingProductId) {
-      const productRef = doc(
-        inventoryRef,
-        editingProductId
-      );
+      const productRef = doc(inventoryRef, editingProductId);
 
       await updateDoc(productRef, {
         name,
@@ -830,7 +771,7 @@ async function saveOrUpdateToFirestore(
     addProductForm.reset();
 
     const stockInput = document.getElementById("addStock");
-    if (stockInput) stockInput.value = "1";
+    if (stockInput) stockInput.value = "0";
 
     const fileInput = document.getElementById("addImageFile");
     if (fileInput) fileInput.value = "";
@@ -860,13 +801,9 @@ async function deleteProduct(id) {
   }
 
   try {
-    const targetProduct = allProducts.find(
-      (product) => product.id === id
-    );
+    const targetProduct = allProducts.find((product) => product.id === id);
 
-    const productName = targetProduct
-      ? targetProduct.name
-      : "Produkto";
+    const productName = targetProduct ? targetProduct.name : "Produkto";
 
     const inventoryRef = collection(
       db,
@@ -888,8 +825,7 @@ async function deleteProduct(id) {
   }
 }
 
-const inventorySearch =
-  document.getElementById("inventorySearch");
+const inventorySearch = document.getElementById("inventorySearch");
 
 if (inventorySearch) {
   inventorySearch.addEventListener("input", (event) => {
@@ -899,8 +835,7 @@ if (inventorySearch) {
   });
 }
 
-const categoryFilter =
-  document.getElementById("categoryFilter");
+const categoryFilter = document.getElementById("categoryFilter");
 
 if (categoryFilter) {
   categoryFilter.addEventListener("change", (event) => {
@@ -928,19 +863,12 @@ async function findProductByCode(code) {
   try {
     const snapshot = await getDocs(
       query(
-        collection(
-          db,
-          "users",
-          currentUserId,
-          "inventory"
-        ),
+        collection(db, "users", currentUserId, "inventory"),
         where("barcode", "==", code)
       )
     );
 
-    const data = snapshot.docs[0]
-      ? snapshot.docs[0].data()
-      : null;
+    const data = snapshot.docs[0] ? snapshot.docs[0].data() : null;
 
     if (data && data.name) {
       const key = normName(data.name);
@@ -968,8 +896,7 @@ async function handleScannedCode(rawCode) {
   const product = await findProductByCode(code);
 
   if (product) {
-    const searchInput =
-      document.getElementById("inventorySearch");
+    const searchInput = document.getElementById("inventorySearch");
 
     const term = product.name || code;
 
@@ -981,15 +908,13 @@ async function handleScannedCode(rawCode) {
     return;
   }
 
-  const barcodeInput =
-    document.getElementById("addBarcode");
+  const barcodeInput = document.getElementById("addBarcode");
 
   if (barcodeInput) {
     barcodeInput.value = code;
   }
 
-  const nameInput =
-    document.getElementById("addName");
+  const nameInput = document.getElementById("addName");
 
   if (nameInput) nameInput.focus();
 
@@ -998,8 +923,7 @@ async function handleScannedCode(rawCode) {
   );
 }
 
-const startScanBtn =
-  document.getElementById("startScanBtn");
+const startScanBtn = document.getElementById("startScanBtn");
 
 if (startScanBtn) {
   startScanBtn.addEventListener("click", async () => {
@@ -1040,8 +964,7 @@ let wedgeLast = 0;
 
 document.addEventListener("keydown", async (event) => {
   const tag =
-    (document.activeElement &&
-      document.activeElement.tagName) || "";
+    (document.activeElement && document.activeElement.tagName) || "";
 
   if (["INPUT", "TEXTAREA", "SELECT"].includes(tag)) return;
   if (event.ctrlKey || event.altKey || event.metaKey) return;
